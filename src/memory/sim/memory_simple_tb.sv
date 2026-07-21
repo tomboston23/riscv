@@ -5,7 +5,7 @@
 `endif
 
 localparam string OUT_HOME_STR = `OUT_HOME;
-string dumpfile_path = {OUT_HOME_STR, "/memory/waves/wave.vcd"};
+string dumpfile_path = {OUT_HOME_STR, "/memory/waves/memory_simple.vcd"};
 
 module memory_simple_tb;
 
@@ -95,6 +95,12 @@ module memory_simple_tb;
         end
     endtask
 
+    task automatic cause_fail();
+        begin
+            $display("=== Causing Intentional Failure ===");
+            $fatal(1, "Intentional failure for testing purposes.");
+        end
+    endtask
     //-------------------------------------------------------------------------
     // Test Sequence
     //-------------------------------------------------------------------------
@@ -106,39 +112,37 @@ module memory_simple_tb;
         // Wait until reset completes
         @(negedge rst);
 
-        // TODO: Apply stimulus here
-
         $display("=== Starting Test 1 ===");
         // Test 1: Simple port2 test: single write and read back
         write_to_port2(32'h00000004, 32'hDEADBEEF, 4'hF);
         read_from_port2(32'h00000004, 4'hF, port2_dout);
-        assert(port2_dout == 32'hDEADBEEF) else $fatal(1, "Data read back does not match data written!");
+        assert(port2_dout == 32'hDEADBEEF) else $fatal(1, "Test 1: Data read back does not match data written!");
     
         $display("=== Starting Test 2 ===");
 
         // Test 2: Complex port2 test: multiple interleaved writes and reads
         write_to_port2(32'h00000008, 32'hCAFEBABE, 4'hF);
         read_from_port2(32'h00000008, 4'hF, port2_dout);
-        assert(port2_dout == 32'hCAFEBABE) else $fatal(1, "Data read back does not match data written!");
+        assert(port2_dout == 32'hCAFEBABE) else $fatal(1, "Test 2: Data read back does not match data written!");
 
         write_to_port2(32'h0000000C, 32'hFEEDFACE, 4'hF);
         read_from_port2(32'h0000000C, 4'hF, port2_dout);
-        assert(port2_dout == 32'hFEEDFACE) else $fatal(1, "Data read back does not match data written!");
+        assert(port2_dout == 32'hFEEDFACE) else $fatal(1, "Test 2.1: Data read back does not match data written!");
 
         read_from_port2(32'h00000008, 4'hF, port2_dout);
-        assert(port2_dout == 32'hCAFEBABE) else $fatal(1, "Data read back does not match data written!");
+        assert(port2_dout == 32'hCAFEBABE) else $fatal(1, "Test 2.2: Data read back does not match data written!");
 
         read_from_port2(32'h0000000C, 4'hF, port2_dout);
-        assert(port2_dout == 32'hFEEDFACE) else $fatal(1, "Data read back does not match data written!");
+        assert(port2_dout == 32'hFEEDFACE) else $fatal(1, "Test 2.3: Data read back does not match data written!");
     
         write_to_port2(32'h00000010, 32'h12345678, 4'hF);
         read_from_port2(32'h00000010, 4'hF, port2_dout);
-        assert(port2_dout == 32'h12345678) else $fatal(1, "Data read back does not match data written!");
+        assert(port2_dout == 32'h12345678) else $fatal(1, "Test 2.4: Data read back does not match data written!");
 
         read_from_port2(32'h0000000C, 4'hF, port2_dout);
-        assert(port2_dout == 32'hFEEDFACE) else $fatal(1, "Data read back does not match data written!");
+        assert(port2_dout == 32'hFEEDFACE) else $fatal(1, "Test 2.5: Data read back does not match data written!");
         read_from_port2(32'h00000008, 4'hF, port2_dout);
-        assert(port2_dout == 32'hCAFEBABE) else $fatal(1, "Data read back does not match data written!");
+        assert(port2_dout == 32'hCAFEBABE) else $fatal(1, "Test 2.6: Data read back does not match data written!");
 
         $display("=== Starting Test 3 ===");
 
@@ -146,9 +150,17 @@ module memory_simple_tb;
         write_to_port2(32'h00000014, 32'hAABBCCDD, 4'b0011); // Write lower half
         write_to_port2(32'h00000014, 32'h11223344, 4'b1100); // Write upper half
         read_from_port2(32'h00000014, 4'hF, port2_dout);
-        assert(port2_dout == 32'h3344CCDD) else $fatal(1, "Data read back does not match data written!");
+        assert(port2_dout == 32'h3344CCDD) else $fatal(1, "Test 3.1: Data read back does not match data written!");
+
+        write_to_port2(32'h00000014, 32'h55667788, 4'b0001);
+        write_to_port2(32'h00000014, 32'h99AABBCC, 4'b0010);
+        write_to_port2(32'h00000014, 32'hDDEEFF00, 4'b0100);
+        write_to_port2(32'h00000014, 32'hFF001122, 4'b1000);
+        read_from_port2(32'h00000014, 4'hF, port2_dout);
+        assert(port2_dout == 32'hFFEEBB88) else $fatal(1, "Test 3.2: Data read back does not match data written!");
 
         $display("=== Simulation Complete ===");
+
         $finish;
     end
 

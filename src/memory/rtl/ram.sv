@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 
-localparam MEM_SIZE = 1 << 32;
-
-module ram32_magic (
+`include "global_features.svh"
+module ram32_magic 
+#(F_INIT_FILE_PRESENT=0)(
     input logic clk,
 
     // port 1 - read-only, designed for instruction fetch
@@ -20,6 +20,26 @@ module ram32_magic (
     output logic port2_resp
 );
     logic [31:0] mem [logic [31:0]];
+
+    initial begin
+        if (F_INIT_FILE_PRESENT) begin
+            int fd;
+            int status;
+            logic [31:0] addr, data;
+
+            fd = $fopen(`F_INIT_FILE, "r");
+            if (fd == 0)
+                $fatal("Couldn't open %s", `F_INIT_FILE);
+
+            while (!$feof(fd)) begin
+                status = $fscanf(fd, "%h %h\n", addr, data);
+                if (status == 2)
+                    mem[addr >> 2] = data;
+            end
+
+            $fclose(fd);
+        end
+    end
 
     logic [31:0] addr1 = port1_addr >> 2;
     logic [31:0] addr2 = port2_addr >> 2;
