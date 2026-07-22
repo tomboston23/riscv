@@ -11,14 +11,6 @@ SECTIONS
 {
     . = ORIGIN(RAM);
 
-    .tohost :
-    {
-        . = ALIGN(8);
-        tohost = .;
-        LONG(0);
-        LONG(0);
-    } > RAM
-
     .text : ALIGN(4)
     {
         *(.text.init)

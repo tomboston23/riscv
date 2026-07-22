@@ -1,15 +1,11 @@
 # test ALU instructions that ONLY use x0. 
 # that way we can verify fetch without needing any decode/alu logic
+.include "global_features.inc"
+
 .align 4
 .section .text
 .globl _start
     # simple program to test fetching and decoding
-dummy:
-    or  x0, x0, x0
-    and  x0, x0, x0
-    add  x0, x0, x0
-    xor  x0, x0, x0
-    srl  x0, x0, x0
 _start:
     # All operations: x0 = x0 OP x0
     # No immediates (except 0), no branches, no jumps
@@ -139,10 +135,16 @@ _start:
     xor  x0, x0, x0
     or   x0, x0, x0
     and  x0, x0, x0
+
+.if (F_RISCV_EXIT_INST_PRESENT == 1)
 done:
+    .word F_RISCV_EXIT_INST
+.else
+done: 
     la t0, tohost
     li t1, 1
     sw t1, 0(t0)
+.endif
     
     # Program ends here - will just keep executing whatever follows
     # (likely faulting or wrapping around depending on your implementation)

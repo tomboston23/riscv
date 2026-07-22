@@ -86,7 +86,7 @@ _start:
     or   x0, x0, x0
     and  x0, x0, x0
 done:
-    j done
+    slti x0, x0, -256
     # Program ends here - will just keep executing whatever follows
     # (likely faulting or wrapping around depending on your implementation)
 

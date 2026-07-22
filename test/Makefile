@@ -12,6 +12,9 @@ ifndef TEST_FILE
 	TEST_FILE = cp1.s
 endif
 
+clean:
+	@rm -rf $(OUT_HOME)/program
+
 build: elf hex dis
 
 elf:
@@ -20,6 +23,7 @@ elf:
 		-march=rv32i \
 		-mabi=ilp32 \
 		-nostdlib \
+		-I$(OUT_HOME)/features \
 		-Wl,-defsym,RAM_ORIGIN=$(RAM_ORIGIN) \
 		-T $(STEM)/test/linker.ld \
 		-o $(OUT_HOME)/program/program.elf \
@@ -28,11 +32,9 @@ elf:
 bin:
 	riscv64-unknown-elf-objcopy -O binary $(OUT_HOME)/program/program.elf $(OUT_HOME)/program/program.bin
 
-hex: $(ENTRY_INFO)
-
-$(ENTRY_INFO): $(OUT_HOME)/program/program.elf
+hex: 
 	@mkdir -p $(dir $@)
-	python3 $(STEM)/test/parse_elf.py --elf_file $(OUT_HOME)/program/program.elf --out_file $(OUT_HOME)/program/program.hex --entry_file $@
+	python3 $(STEM)/test/parse_elf.py --elf_file $(OUT_HOME)/program/program.elf --out_file $(OUT_HOME)/program/program.hex --entry_file $(ENTRY_INFO)
 
 dis: 
 	$(OBJDUMP) -d $(OUT_HOME)/program/program.elf > $(OUT_HOME)/program/program.dis
@@ -107,9 +109,10 @@ LDFLAGS=-L$(SPIKE)/build \
         -lpthread \
         -ldl
 
+SPIKE_INC := -I/home/thboston/tools/ELFIO -I$(OUT_HOME)/features
 .PHONY: spike
 
 spike:
 	@mkdir -p $(OUT_HOME)/program
-	$(CXX) $(CFLAGS) $(STEM)/test/spike/main.cpp -o $(OUT_HOME)/program/spike_test $(LDFLAGS)
+	$(CXX) $(CFLAGS) $(STEM)/test/spike/main.cpp -o $(OUT_HOME)/program/spike_test $(LDFLAGS) $(SPIKE_INC)
 	$(OUT_HOME)/program/spike_test $(OUT_HOME)/program/program.elf
