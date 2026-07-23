@@ -11,7 +11,7 @@ _start:
     # No immediates (except 0), no branches, no jumps
     # Just pure R-type with all register fields = x0
     
-    add  x1, x0, x0      # x1 = x0 + x0
+    add  x22, x0, x0      # x1 = x0 + x0
     addi x1, x0, 5
     xor  x1, x0, x1
     sll  x1, x1, x1

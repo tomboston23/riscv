@@ -4,22 +4,21 @@
 `error "OUT_HOME not defined"
 `endif
 
+`include "global_features.svh"
+
 localparam string OUT_HOME_STR = `OUT_HOME;
 localparam logic [31:0] ELF_ENTRY = 32'h`ELF_ENTRY;
 string dumpfile_path = {OUT_HOME_STR, "/hardware/waves/cpu_simple.vcd"};
 
-module cpu_simple_tb;
+import rv32i_types::*;
 
-    //-------------------------------------------------------------------------
-    // Clock & Reset
-    //-------------------------------------------------------------------------
-
-    logic clk = 0;
-    logic rst = 1;
-
-    localparam CLK_PERIOD = 10ns;
-
-    always #(CLK_PERIOD/2) clk = ~clk;
+module cpu_simple_tb(
+    input  logic clk,
+    input  logic rst,
+    output logic        commit_valid,
+    output logic [31:0] commit_pc,
+    output logic [31:0] commit_inst
+);
 
     //-------------------------------------------------------------------------
     // Variable declarations
@@ -28,11 +27,16 @@ module cpu_simple_tb;
     logic [31:0] port1_addr, port1_dout, port2_addr, port2_din, port2_dout;
     logic port1_re, port1_resp, port2_resp;
     logic [3:0] port2_wstrb, port2_rstrb;
+    commit_intf_t commit_intf;
+
+    assign commit_valid = commit_intf.valid;
+    assign commit_pc = commit_intf.pc;
+    assign commit_inst = commit_intf.inst;
 
     //-------------------------------------------------------------------------
     // Instantiate the DUT
     // -------------------------------------------------------------------------
-
+`ifdef F_MAGIC_MEMORY
     ram32_magic #(.F_INIT_FILE_PRESENT(1'b1)) ram (
         .clk(clk),
         .port1_addr(port1_addr),
@@ -46,6 +50,7 @@ module cpu_simple_tb;
         .port2_rstrb(port2_rstrb),
         .port2_resp(port2_resp)
     );
+`endif
 
     cpu #(.DEFAULT_PC(ELF_ENTRY)) dut (
         .clk(clk),
@@ -59,18 +64,9 @@ module cpu_simple_tb;
         .dmem_rdata(port2_dout),
         .dmem_wmask(port2_wstrb),
         .dmem_rmask(port2_rstrb),
-        .dmem_resp(port2_resp)
+        .dmem_resp(port2_resp),
+        .commit_intf(commit_intf)
     );
-
-    //-------------------------------------------------------------------------
-    // Reset Sequence
-    //-------------------------------------------------------------------------
-
-    initial begin
-        rst = 1;
-        repeat (5) @(posedge clk);
-        rst = 0;
-    end
 
     //-------------------------------------------------------------------------
     // Define sub-tasks for common operations
@@ -87,11 +83,12 @@ module cpu_simple_tb;
     //-------------------------------------------------------------------------
 
     initial begin
-
-        while (port1_dout != 32'h00100073) begin // wait until ebreak instruction is hit
-            @(posedge clk);
+`ifdef F_RISCV_EXIT_INST
+        if (commit_intf.valid && commit_intf.inst == `F_RISCV_EXIT_INST) begin // check for exit instruction
+            $display("=== RISCV Exit Instruction Detected ===");
+            $finish;
         end
-        $finish;
+`endif // F_RISCV_EXIT_INST_PRESENT
 
     end
 

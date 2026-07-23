@@ -47,6 +47,16 @@ def format_feature_value(value, raw_value)
   end
 end
 
+def format_svh_feature_value(value, raw_value)
+  if value.is_a?(String)
+    value.inspect
+  elsif raw_value && raw_value.match?(/^\s*0x[0-9a-fA-F]+\s*$/)
+    "32'h#{value.to_s(16).rjust(8, '0').upcase}"
+  else
+    value.to_s
+  end
+end
+
 def generate_svh(features, output_path)
   header = <<~HEADER
     // Generated from global_features.rb
@@ -58,7 +68,7 @@ def generate_svh(features, output_path)
 
   body = features.map do |feature|
     define_name = feature[:name].upcase
-    value_text = format_feature_value(feature[:value], feature[:raw_value])
+    value_text = format_svh_feature_value(feature[:value], feature[:raw_value])
     "`define #{define_name} #{value_text}"
   end.join("\n")
 

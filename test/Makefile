@@ -40,6 +40,7 @@ dis:
 	$(OBJDUMP) -d $(OUT_HOME)/program/program.elf > $(OUT_HOME)/program/program.dis
 
 VERILATOR := verilator
+VERILATOR_ROOT := /usr/share/verilator
 MEM_OUT_DIR := $(OUT_HOME)/memory
 VERILATOR_DEFINES := -DOUT_HOME=\"$(OUT_HOME)\" -DRAM_ORIGIN=$(RAM_ORIGIN) -DELF_ENTRY=$(ELF_ENTRY)
 MEM_SRC := $(shell find $(STEM)/src/memory -name "*.sv" -or -name "*.v")
@@ -67,6 +68,7 @@ basic-compile-mem:
 		$(MEM_SRC) \
 
 HW_OUT_DIR := $(OUT_HOME)/hardware
+HW_SIM=$(OUT_HOME)/hardware/basic-hw
 HW_SRC := $(shell find $(STEM)/src/hardware -name "*.sv" -or -name "*.v")
 HW_SRC += $(shell find $(STEM)/src/memory/rtl -name "*.sv" -or -name "*.v")
 
@@ -82,17 +84,20 @@ basic-run-hw:
 
 basic-compile-hw:	
 	@mkdir -p $(HW_OUT_DIR)
-	@mkdir -p $(HW_OUT_DIR)/basic-hw
+	@mkdir -p $(HW_SIM)
 	$(VERILATOR) \
-		--binary \
+		--cc \
+		--timing  \
 		--sv \
+		-DDEBUG \
 		--trace \
 		--timescale 1ns/1ps \
-		--Mdir $(HW_OUT_DIR)/basic-hw \
+		--Mdir $(HW_SIM) \
 		-I$(OUT_HOME)/features \
 		--top-module cpu_simple_tb \
 		$(VERILATOR_DEFINES) \
 		$(HW_SRC) \
+	&& make -C $(HW_SIM) -f Vcpu_simple_tb.mk
 
 CXX=g++
 
@@ -100,19 +105,36 @@ SPIKE=/home/thboston/tools/riscv-isa-sim
 
 CFLAGS=-std=c++20 \
        -iquote $(SPIKE)/riscv \
-       -iquote $(SPIKE)/fesvr
+       -iquote $(SPIKE)/fesvr \
+       -I/home/thboston/tools/ELFIO \
+       -I$(OUT_HOME)/features \
+       -I$(HW_SIM) \
+       -I$(VERILATOR_ROOT)/include
 
 LDFLAGS=-L$(SPIKE)/build \
         -Wl,-rpath,$(SPIKE)/build \
         -lriscv \
         -lfesvr \
         -lpthread \
-        -ldl
+        -ldl \
+        $(HW_SIM)/Vcpu_simple_tb__ALL.o \
+        $(HW_SIM)/verilated.o \
+        $(HW_SIM)/verilated_threads.o \
+        $(HW_SIM)/verilated_timing.o \
+        $(HW_SIM)/verilated_vcd_c.o
 
-SPIKE_INC := -I/home/thboston/tools/ELFIO -I$(OUT_HOME)/features
 .PHONY: spike
 
 spike:
 	@mkdir -p $(OUT_HOME)/program
-	$(CXX) $(CFLAGS) $(STEM)/test/spike/main.cpp -o $(OUT_HOME)/program/spike_test $(LDFLAGS) $(SPIKE_INC)
-	$(OUT_HOME)/program/spike_test $(OUT_HOME)/program/program.elf
+	@mkdir -p $(OUT_HOME)/program/run
+	@touch $(OUT_HOME)/program/run/program_run.log
+
+	$(CXX) $(CFLAGS) \
+	    $(STEM)/test/spike/main.cpp \
+	    -o $(OUT_HOME)/program/spike_test \
+	    $(LDFLAGS)
+
+	$(OUT_HOME)/program/spike_test \
+	    $(OUT_HOME)/program/program.elf \
+	    $(OUT_HOME)/program/run/program_run.log

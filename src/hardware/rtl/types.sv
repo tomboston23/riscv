@@ -84,4 +84,23 @@ package rv32i_types;
     logic [31:0] inst;
   } mem_wb_t;
 
+  typedef struct packed {
+    logic valid;
+    logic [31:0] pc;
+    logic [31:0] pc_next;
+    logic [31:0] inst;
+    logic [4:0] rd_s;
+    logic [31:0] rd_v;
+    logic [4:0] rs1_s;
+    logic [31:0] rs1_v;
+    logic [4:0] rs2_s;
+    logic [31:0] rs2_v;
+    logic [3:0]  mem_wmask;
+    logic [3:0]  mem_rmask;
+    logic [31:0] mem_addr;
+    logic [31:0] mem_rdata;
+    logic [31:0] mem_wdata;
+    logic [31:0] order;
+  } commit_intf_t;
+
 endpackage

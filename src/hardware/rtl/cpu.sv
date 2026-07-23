@@ -15,7 +15,9 @@ import rv32i_types::*;
     output logic [3:0]   dmem_wmask,
     input  logic [31:0]  dmem_rdata,
     output logic [31:0]  dmem_wdata,
-    input  logic         dmem_resp
+    input  logic         dmem_resp,
+    
+    output commit_intf_t commit_intf
 );
 
 logic global_stall;
@@ -64,5 +66,24 @@ if_stage if_stage_inst (
     .imem_re(imem_re),
     .if_stall(if_stall)
 );
+
+// Initialize the commit interface
+logic [31:0] order;
+
+always_ff @(posedge clk) begin
+    if (rst) begin
+        order <= '0;
+    end else if (commit_intf.valid) begin
+        order <= order + 1;
+    end
+end
+
+always_comb begin
+    commit_intf = '0;
+    commit_intf.valid = if_id_reg.valid & !global_stall;
+    commit_intf.pc = if_id_reg.pc;
+    commit_intf.pc_next = if_id_reg.pc_next;
+    commit_intf.inst = if_id_reg.inst;
+end
 
 endmodule
