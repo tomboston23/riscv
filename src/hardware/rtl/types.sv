@@ -68,6 +68,11 @@ package rv32i_types;
     logic [31:0] pc;
     logic [31:0] pc_next;
     logic [31:0] inst;
+    logic [4:0] rd_s;
+    logic [4:0] rs1_s;
+    logic [4:0] rs2_s;
+    logic [31:0] rs1_v;
+    logic [31:0] rs2_v;
   } id_ex_t;
 
   typedef struct packed {

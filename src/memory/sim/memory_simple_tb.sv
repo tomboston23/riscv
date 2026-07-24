@@ -34,6 +34,7 @@ module memory_simple_tb;
 
     ram32_magic dut (
         .clk(clk),
+        .rst(rst),
         .port1_addr(port1_addr),
         .port1_dout(port1_dout),
         .port1_re(port1_re),

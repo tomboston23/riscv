@@ -5,6 +5,7 @@ STEM ?= $(abspath $(CURDIR)/..)
 OUT_HOME ?= $(abspath $(CURDIR)/../out)
 ENTRY_INFO := $(OUT_HOME)/program/entry.mk
 RUN_RESULT := $(shell ruby $(STEM)/run.rb)
+$(info RUN_RESULT: $(RUN_RESULT))
 
 -include $(ENTRY_INFO)
 
@@ -86,8 +87,27 @@ basic-compile-hw:
 	@mkdir -p $(HW_OUT_DIR)
 	@mkdir -p $(HW_SIM)
 	$(VERILATOR) \
+		--binary \
+		--timing \
+		--sv \
+		-DDEBUG \
+		--trace \
+		--timescale 1ns/1ps \
+		--Mdir $(HW_SIM) \
+		-I$(OUT_HOME)/features \
+		--top-module cpu_simple_tb \
+		$(VERILATOR_DEFINES) -DTB_DRIVE_CLOCKS=1 \
+		$(HW_SRC)
+
+gtk:
+	gtkwave $(HW_OUT_DIR)/waves/cpu_simple.vcd
+
+spike-compile-hw:
+	@mkdir -p $(HW_OUT_DIR)
+	@mkdir -p $(HW_SIM)
+	$(VERILATOR) \
 		--cc \
-		--timing  \
+		--timing \
 		--sv \
 		-DDEBUG \
 		--trace \
@@ -125,7 +145,7 @@ LDFLAGS=-L$(SPIKE)/build \
 
 .PHONY: spike
 
-spike:
+spike: build spike-compile-hw
 	@mkdir -p $(OUT_HOME)/program
 	@mkdir -p $(OUT_HOME)/program/run
 	@touch $(OUT_HOME)/program/run/program_run.log

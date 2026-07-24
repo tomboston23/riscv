@@ -1,10 +1,11 @@
 `timescale 1ns / 1ps
 
 `include "global_features.svh"
-module ram32_magic 
-#(F_INIT_FILE_PRESENT=0)(
+module ram32_magic #(
+    parameter F_INIT_FILE_PRESENT = 0
+) (
     input logic clk,
-
+    input logic rst,
     // port 1 - read-only, designed for instruction fetch
     input logic [31:0] port1_addr,
     output logic [31:0] port1_dout,
@@ -27,9 +28,9 @@ module ram32_magic
             int status;
             logic [31:0] addr, data;
 
-            fd = $fopen(`F_INIT_FILE, "r");
+            fd = $fopen(`F_INIT_FILE, "r"); 
             if (fd == 0)
-                $fatal("Couldn't open %s", `F_INIT_FILE);
+                $fatal("Couldn't open %s", `F_INIT_FILE); 
 
             while (!$feof(fd)) begin
                 status = $fscanf(fd, "%h %h\n", addr, data);
@@ -50,20 +51,23 @@ module ram32_magic
         port1_resp <= 1'b0;
         port2_resp <= 1'b0;
 
-        if (port1_re) begin
-            port1_dout <= mem[addr1];
-            port1_resp <= 1'b1;
-        end
+        if (!rst) begin
 
-        if (port2_wstrb != 4'h0) begin
-            if (port2_wstrb[0]) mem[addr2][7:0]   <= port2_din[7:0];
-            if (port2_wstrb[1]) mem[addr2][15:8]  <= port2_din[15:8];
-            if (port2_wstrb[2]) mem[addr2][23:16] <= port2_din[23:16];
-            if (port2_wstrb[3]) mem[addr2][31:24] <= port2_din[31:24];
-            port2_resp <= 1'b1;
-        end else if (port2_rstrb != 4'h0) begin
-            port2_dout <= mem[addr2];
-            port2_resp <= 1'b1;
+            if (port1_re) begin
+                port1_dout <= mem[addr1];
+                port1_resp <= 1'b1;
+            end
+
+            if (port2_wstrb != 4'h0) begin
+                if (port2_wstrb[0]) mem[addr2][7:0]   <= port2_din[7:0];
+                if (port2_wstrb[1]) mem[addr2][15:8]  <= port2_din[15:8];
+                if (port2_wstrb[2]) mem[addr2][23:16] <= port2_din[23:16];
+                if (port2_wstrb[3]) mem[addr2][31:24] <= port2_din[31:24];
+                port2_resp <= 1'b1;
+            end else if (port2_rstrb != 4'h0) begin
+                port2_dout <= mem[addr2];
+                port2_resp <= 1'b1;
+            end
         end
     end
 

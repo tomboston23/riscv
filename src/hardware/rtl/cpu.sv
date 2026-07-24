@@ -47,13 +47,30 @@ always_ff @(posedge clk) begin
         ex_mem_reg.valid <= '0;
         mem_wb_reg.valid <= '0;
     end else begin
-        pc <= pc_next;
-        if_id_reg <= if_id_reg_next;
-        id_ex_reg <= id_ex_reg_next;
-        ex_mem_reg <= ex_mem_reg_next;
-        mem_wb_reg <= mem_wb_reg_next;
+        if (!global_stall) begin
+            pc <= pc_next;
+            if_id_reg <= if_id_reg_next;
+            id_ex_reg <= id_ex_reg_next;
+            ex_mem_reg <= ex_mem_reg_next;
+            mem_wb_reg <= mem_wb_reg_next;
+        end
     end
 end
+
+logic [4:0] rs1_s, rs2_s;
+logic [31:0] rs1_v, rs2_v;
+
+regfile regfile_inst (
+    .clk(clk),
+    .rst(rst),
+    .regf_we(commit_intf.valid && commit_intf.rd_s != 5'd0),
+    .rd_v(commit_intf.rd_v),
+    .rs1_s(rs1_s),
+    .rs2_s(rs2_s),
+    .rd_s(commit_intf.rd_s),
+    .rs1_v(rs1_v),
+    .rs2_v(rs2_v)
+);
     
 if_stage if_stage_inst (
     .pc(pc),
@@ -65,6 +82,15 @@ if_stage if_stage_inst (
     .imem_addr(imem_addr),
     .imem_re(imem_re),
     .if_stall(if_stall)
+);
+
+id_stage id_stage_inst (
+    .if_id_reg(if_id_reg),
+    .id_ex_reg_next(id_ex_reg_next),
+    .rs1_v(rs1_v),
+    .rs2_v(rs2_v),
+    .rs1_s(rs1_s),
+    .rs2_s(rs2_s)
 );
 
 // Initialize the commit interface
@@ -80,10 +106,16 @@ end
 
 always_comb begin
     commit_intf = '0;
-    commit_intf.valid = if_id_reg.valid & !global_stall;
-    commit_intf.pc = if_id_reg.pc;
-    commit_intf.pc_next = if_id_reg.pc_next;
-    commit_intf.inst = if_id_reg.inst;
+    commit_intf.order = order;
+    commit_intf.valid = id_ex_reg.valid & !global_stall;
+    commit_intf.pc = id_ex_reg.pc;
+    commit_intf.pc_next = id_ex_reg.pc_next;
+    commit_intf.inst = id_ex_reg.inst;
+    commit_intf.rd_s = id_ex_reg.rd_s;
+    commit_intf.rs1_s = id_ex_reg.rs1_s;
+    commit_intf.rs2_s = id_ex_reg.rs2_s;
+    commit_intf.rs1_v = id_ex_reg.rs1_v;
+    commit_intf.rs2_v = id_ex_reg.rs2_v;
 end
 
 endmodule

@@ -57,6 +57,17 @@ def format_svh_feature_value(value, raw_value)
   end
 end
 
+def svh_define_name(feature)
+  name = feature[:name].upcase
+  value = feature[:value]
+
+  if value.is_a?(Numeric) && [0, 1].include?(value)
+    "#{name}__#{value}"
+  else
+    name
+  end
+end
+
 def generate_svh(features, output_path)
   header = <<~HEADER
     // Generated from global_features.rb
@@ -67,7 +78,7 @@ def generate_svh(features, output_path)
   HEADER
 
   body = features.map do |feature|
-    define_name = feature[:name].upcase
+    define_name = svh_define_name(feature)
     value_text = format_svh_feature_value(feature[:value], feature[:raw_value])
     "`define #{define_name} #{value_text}"
   end.join("\n")
