@@ -1,9 +1,8 @@
 OBJDUMP = riscv64-unknown-elf-objdump
 RAM_ORIGIN = 0x80000000
 TOHOST = 0xFFFF0000
-STEM ?= $(abspath $(CURDIR)/..)
-OUT_HOME ?= $(abspath $(CURDIR)/../out)
-ENTRY_INFO := $(OUT_HOME)/program/entry.mk
+PROGRAM_HOME := $(OUT_HOME)/program
+ENTRY_INFO := $(PROGRAM_HOME)/entry.mk
 RUN_RESULT := $(shell ruby $(STEM)/run.rb)
 $(info RUN_RESULT: $(RUN_RESULT))
 
@@ -14,7 +13,7 @@ ifndef TEST_FILE
 endif
 
 clean:
-	@rm -rf $(OUT_HOME)/program
+	@rm -rf $(PROGRAM_HOME)
 
 build: elf hex dis
 
@@ -26,7 +25,7 @@ elf:
 		-nostdlib \
 		-I$(OUT_HOME)/features \
 		-Wl,-defsym,RAM_ORIGIN=$(RAM_ORIGIN) \
-		-T $(STEM)/test/linker.ld \
+		-T $(OUT_HOME)/program/linker.ld \
 		-o $(OUT_HOME)/program/program.elf \
 		$(STEM)/test/test_files/$(TEST_FILE)
 

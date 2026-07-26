@@ -36,6 +36,7 @@ rescue SyntaxError, StandardError => e
 end
 
 require 'fileutils'
+require 'erb'
 
 def format_feature_value(value, raw_value)
   if value.is_a?(String)
@@ -142,6 +143,24 @@ def generate_inc(features, output_path)
   puts "\e[32mPASSED\e[0m -> Assembler include generation"
 end
 
+def generate_linker_script(features, template_path, output_path)
+  puts "Running ERB on source: #{template_path}"
+  context = Object.new
+
+  features.each do |feature|
+    context.define_singleton_method(feature[:name]) do
+      feature[:value]
+    end
+  end
+
+  template = ERB.new(File.read(template_path), trim_mode: "-")
+  rendered = template.result(context.instance_eval { binding })
+
+  FileUtils.mkdir_p(File.dirname(output_path))
+  File.write(output_path, rendered)
+  puts "\e[32mPASSED\e[0m -> Linker script generation"
+end
+
 def safe_join(base, *parts)
   if base.respond_to?(:/)
     parts.reduce(base) { |path, part| path / part }
@@ -155,6 +174,8 @@ def generate_feature_file()
   svh_output = safe_join(ENV['OUT_HOME'], 'features', 'global_features.svh')
   header_output = safe_join(ENV['OUT_HOME'], 'features', 'global_features.h')
   inc_output = safe_join(ENV['OUT_HOME'], 'features', 'global_features.inc')
+  linker_template = safe_join(ENV['STEM'], 'test', 'linker.ld.erb')
+  linker_output = safe_join(ENV['OUT_HOME'], 'program', 'linker.ld')
 
   unless File.exist?(source)
     abort "Missing source file: #{source}"
@@ -166,6 +187,9 @@ def generate_feature_file()
     generate_svh(features, svh_output)
     generate_header(features, header_output)
     generate_inc(features, inc_output)
+    if File.exist?(linker_template)
+      generate_linker_script(features, linker_template, linker_output)
+    end
   rescue Errno::EACCES => e
     puts "\e[31mFAILED\e[0m -> Feature file generation"
     abort "Permission denied writing #{e.message}"

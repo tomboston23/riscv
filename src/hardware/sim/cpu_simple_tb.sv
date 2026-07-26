@@ -158,9 +158,7 @@ module cpu_simple_tb(
 
         $display("=== RISCV Exit Instruction Detected ===");
         $finish;
-`endif // !F_RISCV_EXIT_INST_PRESENT__1
-
-
+`endif // F_RISCV_EXIT_INST_PRESENT__1
 
     end
 
