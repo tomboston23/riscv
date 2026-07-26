@@ -340,7 +340,7 @@ int main(int argc, char** argv)
             if (value != 0){
                 pass_spike = true;
             }
-            if (hw.mem_wmask != 0 && hw.mem_wdata != 0 && hw.mem_addr == elf.tohost) {
+            if (verilator_info.mem_wmask != 0 && verilator_info.mem_wdata != 0 && verilator_info.mem_addr == elf.tohost) {
                 pass_verilator = true;
             }
         }
