@@ -14,6 +14,8 @@ _start:
     add  x22, x0, x0      # x1 = x0 + x0
     addi x1, x0, 5
     xor  x1, x0, x1
+    nop
+    nop
     sll  x1, x1, x1
     add  x0, x0, x0
     or  x0, x0, x0

@@ -42,7 +42,7 @@ package rv32i_types;
     axor = 3'b100,
     sr   = 3'b101, //check logic 30 for logical/arithmetic
     aor  = 3'b110,
-    aand = 3'b111
+    aand  = 3'b111
   } arith_funct3_t;
 
   typedef enum logic [2:0] {
@@ -80,6 +80,16 @@ package rv32i_types;
     logic [31:0] pc;
     logic [31:0] pc_next;
     logic [31:0] inst;
+    logic [4:0] rd_s;
+    logic [31:0] rd_v;
+    logic [4:0] rs1_s;
+    logic [4:0] rs2_s;
+    logic [31:0] rs1_v;
+    logic [31:0] rs2_v;
+    logic [31:0] mem_addr;
+    logic [31:0] mem_wdata;
+    logic [3:0]  mem_rmask;
+    logic [3:0]  mem_wmask;
   } ex_mem_t;
 
   typedef struct packed {

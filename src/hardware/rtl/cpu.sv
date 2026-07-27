@@ -26,16 +26,14 @@ logic if_stall, dmem_stall;
 assign dmem_stall = '0;
 assign global_stall = if_stall | dmem_stall;
 
-assign dmem_addr = '0;
-assign dmem_wdata = '0;
-assign dmem_wmask = '0;
-assign dmem_rmask = '0;
-
 logic [31:0] pc, pc_next;
 if_id_t if_id_reg, if_id_reg_next;
 id_ex_t id_ex_reg, id_ex_reg_next;
 ex_mem_t ex_mem_reg, ex_mem_reg_next;
 mem_wb_t mem_wb_reg, mem_wb_reg_next;
+
+logic jmp;
+logic [31:0] jmp_pc;
 
 assign pc_next = pc + 4;
 
@@ -63,7 +61,7 @@ logic [31:0] rs1_v, rs2_v;
 regfile regfile_inst (
     .clk(clk),
     .rst(rst),
-    .regf_we(commit_intf.valid && commit_intf.rd_s != 5'd0),
+    .regf_we(commit_intf.valid),
     .rd_v(commit_intf.rd_v),
     .rs1_s(rs1_s),
     .rs2_s(rs2_s),
@@ -93,6 +91,17 @@ id_stage id_stage_inst (
     .rs2_s(rs2_s)
 );
 
+ex_stage ex_stage_inst (
+    .id_ex_reg(id_ex_reg),
+    .ex_mem_reg_next(ex_mem_reg_next),
+    .mem_addr(dmem_addr),
+    .mem_rmask(dmem_rmask),
+    .mem_wmask(dmem_wmask),
+    .mem_wdata(dmem_wdata),
+    .jmp(jmp),
+    .pc_next(jmp_pc)
+);
+
 // Initialize the commit interface
 logic [31:0] order;
 
@@ -107,15 +116,20 @@ end
 always_comb begin
     commit_intf = '0;
     commit_intf.order = order;
-    commit_intf.valid = id_ex_reg.valid & !global_stall;
-    commit_intf.pc = id_ex_reg.pc;
-    commit_intf.pc_next = id_ex_reg.pc_next;
-    commit_intf.inst = id_ex_reg.inst;
-    commit_intf.rd_s = id_ex_reg.rd_s;
-    commit_intf.rs1_s = id_ex_reg.rs1_s;
-    commit_intf.rs2_s = id_ex_reg.rs2_s;
-    commit_intf.rs1_v = id_ex_reg.rs1_v;
-    commit_intf.rs2_v = id_ex_reg.rs2_v;
+    commit_intf.valid = ex_mem_reg.valid & !global_stall;
+    commit_intf.pc = ex_mem_reg.pc;
+    commit_intf.pc_next = ex_mem_reg.pc_next;
+    commit_intf.inst = ex_mem_reg.inst;
+    commit_intf.rd_s = ex_mem_reg.rd_s;
+    commit_intf.rd_v = ex_mem_reg.rd_v;
+    commit_intf.rs1_s = ex_mem_reg.rs1_s;
+    commit_intf.rs2_s = ex_mem_reg.rs2_s;
+    commit_intf.rs1_v = ex_mem_reg.rs1_v;
+    commit_intf.rs2_v = ex_mem_reg.rs2_v;
+    commit_intf.mem_wmask = ex_mem_reg.mem_wmask;
+    commit_intf.mem_rmask = ex_mem_reg.mem_rmask;
+    commit_intf.mem_wdata = ex_mem_reg.mem_wdata;
+    commit_intf.mem_addr = ex_mem_reg.mem_addr;
 end
 
 endmodule
