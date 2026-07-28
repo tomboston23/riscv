@@ -35,7 +35,7 @@ mem_wb_t mem_wb_reg, mem_wb_reg_next;
 logic jmp;
 logic [31:0] jmp_pc;
 
-assign pc_next = pc + 4;
+assign pc_next = jmp ? jmp_pc : pc + 4;
 
 always_ff @(posedge clk) begin
     if (rst) begin
@@ -47,25 +47,32 @@ always_ff @(posedge clk) begin
     end else begin
         if (!global_stall) begin
             pc <= pc_next;
-            if_id_reg <= if_id_reg_next;
-            id_ex_reg <= id_ex_reg_next;
+            if (jmp) begin
+                if_id_reg.valid <= '0;
+                id_ex_reg.valid <= '0;
+            end else begin
+                if_id_reg <= if_id_reg_next;
+                id_ex_reg <= id_ex_reg_next;
+            end
             ex_mem_reg <= ex_mem_reg_next;
             mem_wb_reg <= mem_wb_reg_next;
         end
     end
 end
 
-logic [4:0] rs1_s, rs2_s;
-logic [31:0] rs1_v, rs2_v;
+logic [4:0] rs1_s, rs2_s, rd_s;
+logic [31:0] rs1_v, rs2_v, rd_v;
+
+logic regf_we;
 
 regfile regfile_inst (
     .clk(clk),
     .rst(rst),
-    .regf_we(commit_intf.valid),
-    .rd_v(commit_intf.rd_v),
+    .regf_we(regf_we),
+    .rd_v(rd_v),
     .rs1_s(rs1_s),
     .rs2_s(rs2_s),
-    .rd_s(commit_intf.rd_s),
+    .rd_s(rd_s),
     .rs1_v(rs1_v),
     .rs2_v(rs2_v)
 );
@@ -102,6 +109,19 @@ ex_stage ex_stage_inst (
     .pc_next(jmp_pc)
 );
 
+mem_stage mem_stage_inst (
+    .ex_mem_reg(ex_mem_reg),
+    .mem_wb_reg_next(mem_wb_reg_next),
+    .mem_rdata(dmem_rdata)
+);
+
+wb_stage wb_stage_inst (
+    .mem_wb_reg(mem_wb_reg),
+    .regf_we(regf_we),
+    .rd_v(rd_v),
+    .rd_s(rd_s)
+);
+
 // Initialize the commit interface
 logic [31:0] order;
 
@@ -116,20 +136,21 @@ end
 always_comb begin
     commit_intf = '0;
     commit_intf.order = order;
-    commit_intf.valid = ex_mem_reg.valid & !global_stall;
-    commit_intf.pc = ex_mem_reg.pc;
-    commit_intf.pc_next = ex_mem_reg.pc_next;
-    commit_intf.inst = ex_mem_reg.inst;
-    commit_intf.rd_s = ex_mem_reg.rd_s;
-    commit_intf.rd_v = ex_mem_reg.rd_v;
-    commit_intf.rs1_s = ex_mem_reg.rs1_s;
-    commit_intf.rs2_s = ex_mem_reg.rs2_s;
-    commit_intf.rs1_v = ex_mem_reg.rs1_v;
-    commit_intf.rs2_v = ex_mem_reg.rs2_v;
-    commit_intf.mem_wmask = ex_mem_reg.mem_wmask;
-    commit_intf.mem_rmask = ex_mem_reg.mem_rmask;
-    commit_intf.mem_wdata = ex_mem_reg.mem_wdata;
-    commit_intf.mem_addr = ex_mem_reg.mem_addr;
+    commit_intf.valid = mem_wb_reg.valid & !global_stall;
+    commit_intf.pc = mem_wb_reg.pc;
+    commit_intf.pc_next = mem_wb_reg.pc_next;
+    commit_intf.inst = mem_wb_reg.inst;
+    commit_intf.rd_s = mem_wb_reg.rd_s;
+    commit_intf.rd_v = (mem_wb_reg.rd_s == '0) ? '0 : mem_wb_reg.rd_v;
+    commit_intf.rs1_s = mem_wb_reg.rs1_s;
+    commit_intf.rs2_s = mem_wb_reg.rs2_s;
+    commit_intf.rs1_v = mem_wb_reg.rs1_v;
+    commit_intf.rs2_v = mem_wb_reg.rs2_v;
+    commit_intf.mem_wmask = mem_wb_reg.mem_wmask;
+    commit_intf.mem_rmask = mem_wb_reg.mem_rmask;
+    commit_intf.mem_wdata = mem_wb_reg.mem_wdata;
+    commit_intf.mem_addr = mem_wb_reg.mem_addr;
+    commit_intf.mem_rdata = mem_wb_reg.mem_rdata;
 end
 
 endmodule

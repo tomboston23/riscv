@@ -65,7 +65,10 @@ module ram32_magic #(
                 if (port2_wstrb[3]) mem[addr2][31:24] <= port2_din[31:24];
                 port2_resp <= 1'b1;
             end else if (port2_rstrb != 4'h0) begin
-                port2_dout <= mem[addr2];
+                if (port2_rstrb[0]) port2_dout[7:0] <= mem[addr2][7:0];
+                if (port2_rstrb[1]) port2_dout[15:8] <= mem[addr2][15:8];
+                if (port2_rstrb[2]) port2_dout[23:16] <= mem[addr2][23:16];
+                if (port2_rstrb[3]) port2_dout[31:24] <= mem[addr2][31:24];
                 port2_resp <= 1'b1;
             end
         end

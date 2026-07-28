@@ -13,7 +13,11 @@ _start:
     
     add  x22, x0, x0      # x1 = x0 + x0
     addi x1, x0, 5
-    xor  x1, x0, x1
+    nop
+    nop
+    nop
+    add x1, x1, x1
+    nop
     nop
     nop
     sll  x1, x1, x1
@@ -24,120 +28,47 @@ _start:
     xor  x0, x0, x0
     srl  x0, x0, x0
     
-    xor  x0, x0, x0      # x0 = x0 - x0
+    li x5, 10      # x0 = x0 - x0
+    sub  x0, x0, x0
+    sub  x0, x0, x0
+loop:
+    addi x1, x1, 1
     sub  x0, x0, x0
     sub  x0, x0, x0
     sub  x0, x0, x0
-    sub  x0, x0, x0
-    sub  x0, x0, x0
-    sub  x0, x0, x0
-    sub  x0, x0, x0
+    blt x1, x5, loop
     
     and  x0, x0, x0      # x0 = x0 & x0
     and  x0, x0, x0
     and  x0, x0, x0
     and  x0, x0, x0
     and  x0, x0, x0
-    and  x0, x0, x0
-    
-    or   x0, x0, x0      # x0 = x0 | x0
+    auipc x16, 0x1
+    lui  x1, 0xFFAA
     or   x0, x0, x0
     or   x0, x0, x0
     or   x0, x0, x0
-    or   x0, x0, x0
-    or   x0, x0, x0
-    
-    xor  x0, x0, x0      # x0 = x0 ^ x0
-    xor  x0, x0, x0
-    xor  x0, x0, x0
-    xor  x0, x0, x0
-    xor  x0, x0, x0
-    xor  x0, x0, x0
-    
-    sll  x0, x0, x0      # x0 = x0 << x0
-    sll  x0, x0, x0
-    sll  x0, x0, x0
-    sll  x0, x0, x0
-    
-    srl  x0, x0, x0      # x0 = x0 >> x0 (logical)
-    srl  x0, x0, x0
-    srl  x0, x0, x0
-    srl  x0, x0, x0
-    
-    sra  x0, x0, x0      # x0 = x0 >> x0 (arithmetic)
-    sra  x0, x0, x0
-    sra  x0, x0, x0
-    sra  x0, x0, x0
-    
-    slt  x0, x0, x0      # x0 = (x0 < x0) ? 1 : 0
-    slt  x0, x0, x0
-    slt  x0, x0, x0
-    slt  x0, x0, x0
-    
-    sltu x0, x0, x0      # x0 = (x0 < x0) ? 1 : 0 (unsigned)
-    sltu x0, x0, x0
-    sltu x0, x0, x0
-    sltu x0, x0, x0
-    
-    # Mixed sequence for OOO testing
-    add  x0, x0, x0
-    sub  x0, x0, x0
-    and  x0, x0, x0
-    or   x0, x0, x0
-    xor  x0, x0, x0
-    sll  x0, x0, x0
-    srl  x0, x0, x0
-    sra  x0, x0, x0
-    slt  x0, x0, x0
-    sltu x0, x0, x0
-    
-    # Repeat for longer test sequence
-    add  x0, x0, x0
-    sub  x0, x0, x0
-    and  x0, x0, x0
-    or   x0, x0, x0
-    xor  x0, x0, x0
-    sll  x0, x0, x0
-    srl  x0, x0, x0
-    sra  x0, x0, x0
-    slt  x0, x0, x0
-    sltu x0, x0, x0
-    
-    # More adds for pipeline depth testing
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    
-    # Addi with immediate=0 (only immediate that works without decode)
-    addi x0, x0, 0       # NOP equivalent
-    addi x0, x0, 0
-    addi x0, x0, 0
-    addi x0, x0, 0
-    addi x0, x0, 0
-    addi x0, x0, 0
-    addi x0, x0, 0
-    addi x0, x0, 0
-    
-    # Final mixed sequence
-    add  x0, x0, x0
-    sub  x0, x0, x0
-    xor  x0, x0, x0
-    or   x0, x0, x0
-    and  x0, x0, x0
-
+    addi x1, x1, 0x712
+    nop
+    nop
+    nop
+    sw   x1, 0(x16)
+    nop
+    nop
+    nop
+    lw   x1, 0(x16)
+    lb   x1, 0(x16)
+    lbu  x1, 2(x16)
+    lh   x1, 2(x16)
+    lhu  x1, 0(x16)
+    lb   x1, 3(x16)
+    nop
+    nop
+    nop
+    j done
+    nop
+    nop
+    nop
 .if (F_RISCV_EXIT_INST_PRESENT == 1)
 done:
     .word F_RISCV_EXIT_INST
@@ -152,5 +83,5 @@ done:
     # (likely faulting or wrapping around depending on your implementation)
 
 .section .data
-    # No data needed for this 
+_test_data:
     

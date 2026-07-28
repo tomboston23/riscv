@@ -69,14 +69,16 @@ basic-compile-mem:
 
 HW_OUT_DIR := $(OUT_HOME)/hardware
 HW_SIM=$(OUT_HOME)/hardware/basic-hw
-HW_SRC := $(shell find $(STEM)/src/hardware -name "*.sv" -or -name "*.v")
+HW_SRC := $(shell find $(STEM)/src/hardware/pkg -name "*.sv" -or -name "*.v")
+HW_SRC += $(shell find $(STEM)/src/hardware/rtl -name "*.sv" -or -name "*.v")
+HW_SRC += $(shell find $(STEM)/src/hardware/sim -name "*.sv" -or -name "*.v")
 HW_SRC += $(shell find $(STEM)/src/memory/rtl -name "*.sv" -or -name "*.v")
 
 clean-hw:
 	@rm -rf $(HW_OUT_DIR)
 
 basic-hw: build basic-compile-hw basic-run-hw 
-# basic-hw builds hex file, compiles hw and ram rtl and runs cpu testbench
+# basic-hw builds hex file, compiles hw and ram rtl and runs cpu testbench 
 
 basic-run-hw:
 	@mkdir -p $(HW_OUT_DIR)/waves
@@ -99,7 +101,7 @@ basic-compile-hw:
 		$(HW_SRC)
 
 gtk:
-	gtkwave $(HW_OUT_DIR)/waves/cpu_simple.vcd
+	gtkwave $(HW_OUT_DIR)/waves/cpu_simple.vcd 
 
 spike-compile-hw:
 	@mkdir -p $(HW_OUT_DIR)
