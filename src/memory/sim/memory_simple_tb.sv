@@ -4,8 +4,9 @@
 `error "OUT_HOME not defined"
 `endif
 
-localparam string OUT_HOME_STR = `OUT_HOME;
-string dumpfile_path = {OUT_HOME_STR, "/memory/waves/memory_simple.vcd"};
+`include "global_features.svh"
+
+string mem_dumpfile_path = {`OUT_HOME, "/memory/waves/memory_simple.vcd"};
 
 module memory_simple_tb;
 
@@ -32,7 +33,8 @@ module memory_simple_tb;
     // Instantiate the DUT
     // -------------------------------------------------------------------------
 
-    ram32_magic dut (
+`ifdef F_MAGIC_MEMORY__1
+    ram32_magic #(.F_INIT_FILE_PRESENT(1'b1)) ram (
         .clk(clk),
         .rst(rst),
         .port1_addr(port1_addr),
@@ -46,6 +48,24 @@ module memory_simple_tb;
         .port2_rstrb(port2_rstrb),
         .port2_resp(port2_resp)
     );
+`endif
+
+`ifdef F_MAGIC_MEMORY__0
+    ram32 #(.F_INIT_FILE_PRESENT(1'b1)) ram (
+        .clk(clk),
+        .rst(rst),
+        .port1_addr(port1_addr),
+        .port1_dout(port1_dout),
+        .port1_re(port1_re),
+        .port1_resp(port1_resp),
+        .port2_addr(port2_addr),
+        .port2_din(port2_din),
+        .port2_dout(port2_dout),
+        .port2_wstrb(port2_wstrb),
+        .port2_rstrb(port2_rstrb),
+        .port2_resp(port2_resp)
+    );
+`endif
 
     //-------------------------------------------------------------------------
     // Reset Sequence
@@ -179,7 +199,7 @@ module memory_simple_tb;
     //-------------------------------------------------------------------------
 
     initial begin
-        $dumpfile(dumpfile_path);
+        $dumpfile(mem_dumpfile_path);
         $dumpvars(0, memory_simple_tb);
     end
 

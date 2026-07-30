@@ -6,9 +6,8 @@
 
 `include "global_features.svh"
 
-localparam string OUT_HOME_STR = `OUT_HOME;
 localparam logic [31:0] ELF_ENTRY = 32'h`ELF_ENTRY;
-string dumpfile_path = {OUT_HOME_STR, "/hardware/waves/cpu_simple.vcd"};
+string cpu_dumpfile_path = {`OUT_HOME, "/hardware/waves/cpu_simple.vcd"};
 
 import rv32i_types::*;
 
@@ -116,6 +115,23 @@ module cpu_simple_tb(
     );
 `endif
 
+`ifdef F_MAGIC_MEMORY__0
+    ram32 #(.F_INIT_FILE_PRESENT(1'b1)) ram (
+        .clk(clk),
+        .rst(rst),
+        .port1_addr(port1_addr),
+        .port1_dout(port1_dout),
+        .port1_re(port1_re),
+        .port1_resp(port1_resp),
+        .port2_addr(port2_addr),
+        .port2_din(port2_din),
+        .port2_dout(port2_dout),
+        .port2_wstrb(port2_wstrb),
+        .port2_rstrb(port2_rstrb),
+        .port2_resp(port2_resp)
+    );
+`endif
+
     cpu #(.DEFAULT_PC(ELF_ENTRY)) dut (
         .clk(clk),
         .rst(rst),
@@ -176,7 +192,7 @@ module cpu_simple_tb(
     //-------------------------------------------------------------------------
 
     initial begin
-        $dumpfile(dumpfile_path);
+        $dumpfile(cpu_dumpfile_path);
         $dumpvars(0, cpu_simple_tb);
         $dumpvars(0, cpu_simple_tb.dut);
     `ifdef F_MAGIC_MEMORY__1

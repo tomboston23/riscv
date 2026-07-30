@@ -52,16 +52,16 @@ loop:
     nop
     nop
     nop
-    sw   x1, 0(x16)
+    # sw   x1, 0(x16)
     nop
     nop
     nop
-    lw   x1, 0(x16)
-    lb   x1, 0(x16)
-    lbu  x1, 2(x16)
-    lh   x1, 2(x16)
-    lhu  x1, 0(x16)
-    lb   x1, 3(x16)
+    # lw   x1, 0(x16)
+    # lb   x1, 0(x16)
+    # lbu  x1, 2(x16)
+    # lh   x1, 2(x16)
+    # lhu  x1, 0(x16)
+    # lb   x1, 3(x16)
     nop
     nop
     nop

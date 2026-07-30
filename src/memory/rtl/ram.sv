@@ -1,8 +1,9 @@
 `timescale 1ns / 1ps
 
 `include "global_features.svh"
-module ram32_magic #(
-    parameter F_INIT_FILE_PRESENT = 0
+module ram32 #(
+    parameter F_INIT_FILE_PRESENT = 0,
+    parameter RAM_CLK_DELAY = 2
 ) (
     input logic clk,
     input logic rst,
@@ -44,32 +45,49 @@ module ram32_magic #(
 
     logic [31:0] addr1 = port1_addr >> 2;
     logic [31:0] addr2 = port2_addr >> 2;
+    logic [3:0] cnt1, cnt2;
+    logic [3:0] saved_wstrb2, saved_rstrb2;
+    logic [31:0] saved_addr1, saved_addr2;
 
     always_ff @(posedge clk) begin    
         port1_dout <= 32'bx;
         port2_dout <= 32'bx;
         port1_resp <= 1'b0;
         port2_resp <= 1'b0;
-
-        if (!rst) begin
-
-            if (port1_re) begin
-                port1_dout <= mem[addr1];
-                port1_resp <= 1'b1;
+        if (rst) begin
+            cnt1 <= '0;
+            cnt2 <= '0;
+        end else begin
+            if (cnt1 == RAM_CLK_DELAY) begin
+                cnt1 <= '0;
+                port1_resp <= '1;
+                port1_dout <= mem[saved_addr1];
+            end else if (|cnt1) begin
+                cnt1 <= cnt1 + 1'b1;
+            end else if (port1_re) begin
+                saved_addr1 <= addr1;
+                cnt1 <= 4'b1;
             end
+            if (cnt2 == RAM_CLK_DELAY) begin
+                cnt2 <= '0;
+                port2_resp <= 1'b1;
 
-            if (port2_wstrb != 4'h0) begin
-                if (port2_wstrb[0]) mem[addr2][7:0]   <= port2_din[7:0];
-                if (port2_wstrb[1]) mem[addr2][15:8]  <= port2_din[15:8];
-                if (port2_wstrb[2]) mem[addr2][23:16] <= port2_din[23:16];
-                if (port2_wstrb[3]) mem[addr2][31:24] <= port2_din[31:24];
-                port2_resp <= 1'b1;
-            end else if (port2_rstrb != 4'h0) begin
-                if (port2_rstrb[0]) port2_dout[7:0] <= mem[addr2][7:0];
-                if (port2_rstrb[1]) port2_dout[15:8] <= mem[addr2][15:8];
-                if (port2_rstrb[2]) port2_dout[23:16] <= mem[addr2][23:16];
-                if (port2_rstrb[3]) port2_dout[31:24] <= mem[addr2][31:24];
-                port2_resp <= 1'b1;
+                if (saved_wstrb2[0]) mem[saved_addr2][7:0]   <= port2_din[7:0];
+                if (saved_wstrb2[1]) mem[saved_addr2][15:8]  <= port2_din[15:8];
+                if (saved_wstrb2[2]) mem[saved_addr2][23:16] <= port2_din[23:16];
+                if (saved_wstrb2[3]) mem[saved_addr2][31:24] <= port2_din[31:24];
+
+                if (port2_rstrb[0]) port2_dout[7:0] <= mem[saved_addr2][7:0];
+                if (port2_rstrb[1]) port2_dout[15:8] <= mem[saved_addr2][15:8];
+                if (port2_rstrb[2]) port2_dout[23:16] <= mem[saved_addr2][23:16];
+                if (port2_rstrb[3]) port2_dout[31:24] <= mem[saved_addr2][31:24];
+            end else if (|cnt2) begin
+                cnt2 <= cnt2 + 1'b1;
+            end else if ((port2_wstrb | port2_rstrb) != 4'h0) begin
+                saved_wstrb2 <= port2_wstrb;
+                saved_rstrb2 <= port2_rstrb;
+                saved_addr2 <= addr2;
+                cnt2 <= 4'b1;
             end
         end
     end
