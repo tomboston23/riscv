@@ -1,17 +1,12 @@
-# test ALU instructions that ONLY use x0. 
-# that way we can verify fetch without needing any decode/alu logic
 .include "global_features.inc"
 
 .align 4
 .section .text
 .globl _start
-    # simple program to test fetching and decoding
 _start:
-    # All operations: x0 = x0 OP x0
-    # No immediates (except 0), no branches, no jumps
-    # Just pure R-type with all register fields = x0
+
     
-    add  x22, x0, x0      # x1 = x0 + x0
+    add  x22, x0, x0   
     addi x1, x0, 5
     la x2, _test_data
     lw x5, 0(x2)
@@ -34,7 +29,7 @@ _start:
     xor  x0, x0, x0
     srl  x0, x0, x0
     
-    li x5, 10      # x0 = x0 - x0
+    li x5, 10   
     sub  x0, x0, x0
     sub  x0, x0, x0
 loop:
@@ -44,7 +39,7 @@ loop:
     sub  x0, x0, x0
     blt x1, x5, loop
     
-    and  x0, x0, x0      # x0 = x0 & x0
+    and  x0, x0, x0     
     and  x0, x0, x0
     and  x0, x0, x0
     and  x0, x0, x0

@@ -166,7 +166,7 @@ always_comb begin
             if (id_ex_reg.valid) begin
                 a = s_imm;
                 b = rs1_v;
-                ex_mem_reg_next.mem_addr = {aluout[31:2], 2'b0};
+                ex_mem_reg_next.mem_addr = aluout;
 
                 case (inst[14:12]) 
                     sb: begin
@@ -174,10 +174,12 @@ always_comb begin
                         ex_mem_reg_next.mem_wdata = {{24{1'b0}}, rs2_v[7:0]} << (8 * aluout[1:0]);
                     end
                     sh: begin
+                        ex_mem_reg_next.mem_addr[0] = '0; // 2-byte align
                         ex_mem_reg_next.mem_wmask = (4'b0011 << {aluout[1], 1'b0});
-                        ex_mem_reg_next.mem_wdata = {{16{1'b0}}, rs2_v[15:0]} << (16 * aluout[0]);
+                        ex_mem_reg_next.mem_wdata = {{16{1'b0}}, rs2_v[15:0]} << (16 * aluout[1]);
                     end
                     sw: begin
+                        ex_mem_reg_next.mem_addr[1:0] = '0; // 4-byte align
                         ex_mem_reg_next.mem_wmask = 4'hF;
                         ex_mem_reg_next.mem_wdata = rs2_v;
                     end

@@ -116,7 +116,7 @@ module cpu_simple_tb(
 `endif
 
 `ifdef F_MAGIC_MEMORY__0
-    ram32 #(.F_INIT_FILE_PRESENT(1'b1)) ram (
+    ram32 #(.F_INIT_FILE_PRESENT(1'b1), .RAM_CLK_DELAY(`F_RAM_DELAY)) ram (
         .clk(clk),
         .rst(rst),
         .port1_addr(port1_addr),
