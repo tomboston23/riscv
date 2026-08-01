@@ -13,11 +13,17 @@ _start:
     
     add  x22, x0, x0      # x1 = x0 + x0
     addi x1, x0, 5
-    nop
-    nop
+    la x2, _test_data
+    lw x5, 0(x2)
+    li x3, 0x0A0B0C0D
+    sw x3, 0(x2)
+    lw x5, 0(x2)
+    add x5,x5,x5
     nop
     add x1, x1, x1
+    add x1,x1,x1
     nop
+    add x1,x1,x1
     nop
     nop
     sll  x1, x1, x1
@@ -84,4 +90,4 @@ done:
 
 .section .data
 _test_data:
-    
+    .word 0x12345678

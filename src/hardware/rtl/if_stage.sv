@@ -9,7 +9,8 @@ import rv32i_types::*;
     output if_id_t      if_id_next,
     output logic [31:0] imem_addr,
     output logic        imem_re,
-    output logic        if_stall
+    output logic        if_stall,
+    input logic load_hazard
 );
 
 always_comb begin
@@ -19,7 +20,7 @@ always_comb begin
     if_id_next.pc = pc;
     if_id_next.pc_next = pc_next;
 
-    if (global_stall) begin
+    if (global_stall || load_hazard) begin
         imem_addr = pc;
     end else begin
         imem_addr = pc_next;
