@@ -87,10 +87,10 @@ always_ff @(posedge clk) begin
     end
 end
 
-logic [4:0] rs1_s, rs2_s, rd_s;
-logic [31:0] rs1_v, rs2_v, rd_v;
+logic [4:0] rs1_s, rs2_s, rd_s, csr_rs_s, csr_rd_s;
+logic [31:0] rs1_v, rs2_v, rd_v, csr_rdata, csr_wdata;
 
-logic regf_we;
+logic regf_we, csr_we;
 
 // forwarding logic / hazard
 logic load_hazard;
@@ -117,6 +117,20 @@ regfile regfile_inst (
     .rs1_v(rs1_v),
     .rs2_v(rs2_v)
 );
+
+csr_regfile csr_regfile_inst (
+    .clk(clk),
+    .rst(rst),
+    .csr_we(csr_we),
+    .csr_rs(csr_rs_s),
+    .csr_rd(csr_rd_s),
+    .data_out(csr_rdata),
+    .data_in(csr_wdata),
+    .trap('0),
+    .priv(priv_mode),
+    .trap_pc(mem_wb_reg.pc),
+    .trap_cause(mem_wb_reg.trap_cause)
+);
     
 if_stage if_stage_inst (
     .pc(pc),
@@ -137,7 +151,9 @@ id_stage id_stage_inst (
     .rs1_v(rs1_v),
     .rs2_v(rs2_v),
     .rs1_s(rs1_s),
-    .rs2_s(rs2_s)
+    .rs2_s(rs2_s),
+    .csr_s(csr_rs_s),
+    .csr_v(csr_rdata)
 );
 
 ex_stage ex_stage_inst (
@@ -162,9 +178,22 @@ mem_stage mem_stage_inst (
 wb_stage wb_stage_inst (
     .mem_wb_reg(mem_wb_reg),
     .regf_we(regf_we),
+    .csr_we(csr_we),
+    .csr_rd_s(csr_rd_s),
+    .csr_wdata(csr_wdata),
     .rd_v(rd_v),
     .rd_s(rd_s)
 );
+
+logic [1:0] priv_mode;
+
+always_ff @(posedge clk) begin
+    if (rst) begin
+        priv_mode <= 2'b11; // Default to machine mode
+    end else begin
+        // Update privilege mode based on CSR writes
+    end
+end
 
 // Initialize the commit interface
 logic [31:0] order;
@@ -197,4 +226,14 @@ always_comb begin
     commit_intf.mem_rdata = mem_wb_reg.mem_rdata;
 end
 
+// debug signals for waveform
+logic [4:0] debug_ex_csr, debug_ex_csr_next, debug_mem_csr, debug_wb_csr;
+logic debug_ex_csr_we, debug_mem_csr_we, debug_wb_csr_we;
+assign debug_ex_csr = id_ex_reg.csr_rd_s;
+assign debug_ex_csr_next = id_ex_reg_next.csr_rd_s;
+assign debug_mem_csr = ex_mem_reg.csr_rd_s;
+assign debug_wb_csr = mem_wb_reg.csr_rd_s;
+assign debug_ex_csr_we = id_ex_reg.csr_we;
+assign debug_mem_csr_we = ex_mem_reg.csr_we;
+assign debug_wb_csr_we = mem_wb_reg.csr_we;
 endmodule

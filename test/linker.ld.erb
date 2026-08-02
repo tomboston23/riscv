@@ -7,6 +7,8 @@ MEMORY
     RAM (rw) : ORIGIN = RAM_ORIGIN + 64K, LENGTH = 64K
 }
 
+_stack_top = ORIGIN(RAM) + LENGTH(RAM);
+
 SECTIONS
 {
     . = ORIGIN(RAM);
@@ -23,6 +25,7 @@ SECTIONS
     .text : ALIGN(4)
     {
         *(.text.init)
+        *(.text)
         *(.text*)
     } > ROM
 

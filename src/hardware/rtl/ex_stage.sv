@@ -25,6 +25,7 @@ logic [31:0] i_imm;
 logic [31:0] s_imm;
 logic [31:0] b_imm;
 logic [31:0] j_imm;
+logic [31:0] z_imm;
 
 logic [31:0] inst;
 assign inst = id_ex_reg.inst;
@@ -34,6 +35,8 @@ assign i_imm = {{21{inst[31]}}, inst[30:20]};
 assign s_imm = {{21{inst[31]}}, inst[30:25], inst[11:7]};
 assign b_imm = {{20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0};
 assign j_imm = {{12{inst[31]}}, inst[19:12], inst[20], inst[30:25], inst[24:21], 1'b0};
+assign z_imm = {{27{1'b0}}, inst[19:15]};
+
 
 logic [31:0] rs1_v, rs2_v;
 always_comb begin
@@ -86,6 +89,10 @@ always_comb begin
     ex_mem_reg_next.rd_s = id_ex_reg.rd_s;
     ex_mem_reg_next.pc = id_ex_reg.pc;
     ex_mem_reg_next.inst = id_ex_reg.inst;
+    ex_mem_reg_next.csr_we = id_ex_reg.csr_we;
+    ex_mem_reg_next.csr_rd_s = id_ex_reg.csr_rd_s;
+    ex_mem_reg_next.csr_rdata = id_ex_reg.csr_rdata;
+    ex_mem_reg_next.csr_wdata = '0;
 
     //defaults
     aluop = alu_add;
@@ -264,6 +271,36 @@ always_comb begin
 
                 default: 
                     ex_mem_reg_next.valid = '0;
+            endcase
+        end
+
+        op_system: begin
+            case (inst[14:12])
+                3'b000: begin // csrrw
+                    ex_mem_reg_next.csr_we = '1;
+                    ex_mem_reg_next.csr_wdata = rs1_v;
+                end
+                3'b001: begin // csrrs
+                    ex_mem_reg_next.csr_we = '1;
+                    ex_mem_reg_next.csr_wdata = rs1_v | ex_mem_reg_next.csr_rdata;
+                end
+                3'b010: begin // csrrc
+                    ex_mem_reg_next.csr_we = '1;
+                    ex_mem_reg_next.csr_wdata = ~rs1_v & ex_mem_reg_next.csr_rdata;
+                end
+                3'b100: begin // csrrwi
+                    ex_mem_reg_next.csr_we = '1;
+                    ex_mem_reg_next.csr_wdata = z_imm;
+                end
+                3'b101: begin // csrrsi
+                    ex_mem_reg_next.csr_we = '1;
+                    ex_mem_reg_next.csr_wdata = z_imm | ex_mem_reg_next.csr_rdata;
+                end
+                3'b110: begin // csrrci
+                    ex_mem_reg_next.csr_we = '1;
+                    ex_mem_reg_next.csr_wdata = ~z_imm & ex_mem_reg_next.csr_rdata;
+                end
+                default: ex_mem_reg_next.valid = '0;
             endcase
         end
 

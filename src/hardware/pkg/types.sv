@@ -8,7 +8,8 @@ package rv32i_types;
     op_load      = 7'b0000011, // load (I type)
     op_store     = 7'b0100011, // store (S type)
     op_imm       = 7'b0010011, // arith ops with register/imemediate operands (I type)
-    op_reg       = 7'b0110011  // arith ops with register operands (R type)
+    op_reg       = 7'b0110011, // arith ops with register operands (R type)
+    op_system    = 7'b1110011  // system instructions (I type)
   } rv32i_opcode;
 
   typedef enum logic [2:0] {
@@ -61,6 +62,7 @@ package rv32i_types;
     logic [31:0] pc;
     logic [31:0] pc_next;
     logic [31:0] inst;
+    logic [1:0] priv;
   } if_id_t;
 
   typedef struct packed {
@@ -73,6 +75,13 @@ package rv32i_types;
     logic [4:0] rs2_s;
     logic [31:0] rs1_v;
     logic [31:0] rs2_v;
+    // standard CSR fields
+    logic csr_we;
+    logic [4:0]  csr_rd_s;
+    logic [31:0] csr_rdata;
+    // trap CSR fields
+    logic trap;
+    logic [31:0] trap_cause;
   } id_ex_t;
 
   typedef struct packed {
@@ -91,6 +100,14 @@ package rv32i_types;
     logic [3:0]  mem_rmask;
     logic [3:0]  mem_wmask;
     logic sign;
+    // standard CSR fields
+    logic csr_we;
+    logic [4:0]  csr_rd_s;
+    logic [31:0] csr_rdata;
+    logic [31:0] csr_wdata;
+    // trap CSR fields
+    logic trap;
+    logic [31:0] trap_cause;
   } ex_mem_t;
 
   typedef struct packed {
@@ -109,11 +126,25 @@ package rv32i_types;
     logic [3:0]  mem_rmask;
     logic [3:0]  mem_wmask;
     logic [31:0] mem_rdata;
+    // standard CSR fields
+    logic csr_we;
+    logic [4:0]  csr_rd_s;
+    logic [31:0] csr_rdata;
+    logic [31:0] csr_wdata;
+    // trap CSR fields
+    logic trap;
+    logic [31:0] trap_cause;
   } mem_wb_t;
 
   typedef struct packed {
-    logic [4:0] rd_s;
+    logic [4:0]  rd_s;
     logic [31:0] rd_v;
+    logic        trap;
+    logic [1:0]  priv;
+    logic [4:0]  csr_rd_s;
+    logic [31:0] csr_rd_v;
+    logic [31:0] trap_pc;
+    logic [31:0] trap_cause;
   } fwd_t;
 
   typedef struct packed {
@@ -133,6 +164,69 @@ package rv32i_types;
     logic [31:0] mem_rdata;
     logic [31:0] mem_wdata;
     logic [31:0] order;
+    logic [1:0] priv;
   } commit_intf_t;
+
+  localparam NUM_CSR_REGS = 32;
+
+  typedef enum logic [11:0] {
+    csr_sstatus     = 12'h100,
+    csr_sie         = 12'h104,
+    csr_stvec       = 12'h105,
+    csr_sscratch    = 12'h140,
+    csr_sepc        = 12'h141,
+    csr_scause      = 12'h142,
+    csr_stval       = 12'h143,
+    csr_sip         = 12'h144,
+    csr_mstatus     = 12'h300,
+    csr_mie         = 12'h304,
+    csr_mtvec       = 12'h305,
+    csr_mstatush    = 12'h310,
+    csr_mscratch    = 12'h340,
+    csr_mepc        = 12'h341,
+    csr_mcause      = 12'h342,
+    csr_mtval       = 12'h343,
+    csr_mip         = 12'h344,
+    csr_mnscratch   = 12'h740,
+    csr_mnepc       = 12'h741,
+    csr_mncause     = 12'h742,
+    csr_mnstatus    = 12'h744
+  } csr_t;
+  
+  typedef enum logic [4:0] {
+    csr_sstatus_reg     = 5'b00001,
+    csr_sie_reg         = 5'b00010,
+    csr_stvec_reg       = 5'b00011,
+    csr_sscratch_reg    = 5'b00100,
+    csr_sepc_reg        = 5'b00101,
+    csr_scause_reg      = 5'b00110,
+    csr_stval_reg       = 5'b00111,
+    csr_sip_reg         = 5'b01000,
+    csr_mstatus_reg     = 5'b01001,
+    csr_mie_reg         = 5'b01010,
+    csr_mtvec_reg       = 5'b01011,
+    csr_mscratch_reg    = 5'b01100,
+    csr_mepc_reg        = 5'b01101,
+    csr_mcause_reg      = 5'b01110,
+    csr_mtval_reg       = 5'b01111,
+    csr_mip_reg         = 5'b10000,
+    csr_mnscratch_reg   = 5'b10001,
+    csr_mnepc_reg       = 5'b10010,
+    csr_mncause_reg     = 5'b10011,
+    csr_mnstatus_reg    = 5'b10100
+  } csr_regfile_t;
+  
+  typedef enum logic [3:0] {
+    umode_trap = 4'h8,
+    smode_trap = 4'h9,
+    mmode_trap = 4'hB,
+    breakpoint = 4'h3
+  } mcause_t;
+
+  typedef enum logic [1:0] {
+    umode = 2'b00,
+    smode = 2'b01,
+    mmode = 2'b11
+  } priv_t;
 
 endpackage

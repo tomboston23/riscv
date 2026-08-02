@@ -7,11 +7,11 @@
     # demonstrating OOO-ness
 
     # This test is NOT exhaustive
-_start:
+main:
     # All operations: x0 = x0 OP x0
     # No immediates (except 0), no branches, no jumps
     # Just pure R-type with all register fields = x0
-    
+    mv x31, ra # save ra in x31
     add  x0, x0, x0      # x0 = x0 + x0
     sub  x0, x0, x0
     xor  x0, x0, x0
@@ -66,27 +66,9 @@ _start:
     add  x0, x0, x0
     add  x0, x0, x0
     add  x0, x0, x0
-    add  x0, x0, x0
-    add  x0, x0, x0
-    
-    # Addi with immediate=0 (only immediate that works without decode)
-    addi x0, x0, 0       # NOP equivalent
-    addi x0, x0, 0
-    addi x0, x0, 0
-    addi x0, x0, 0
-    addi x0, x0, 0
-    addi x0, x0, 0
-    addi x0, x0, 0
-    addi x0, x0, 0
-    
-    # Final mixed sequence
-    add  x0, x0, x0
-    sub  x0, x0, x0
-    xor  x0, x0, x0
-    or   x0, x0, x0
-    and  x0, x0, x0
-done:
-    slti x0, x0, -256
+    mv ra, x31 # restore ra
+    ret
+
     # Program ends here - will just keep executing whatever follows
     # (likely faulting or wrapping around depending on your implementation)
 

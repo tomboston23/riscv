@@ -24,6 +24,11 @@ always_comb begin
     mem_wb_reg_next.mem_rmask = ex_mem_reg.mem_rmask;
     mem_wb_reg_next.mem_wmask = ex_mem_reg.mem_wmask;
 
+    mem_wb_reg_next.csr_we = ex_mem_reg.csr_we;
+    mem_wb_reg_next.csr_rd_s = ex_mem_reg.csr_rd_s;
+    mem_wb_reg_next.csr_rdata = ex_mem_reg.csr_rdata;
+    mem_wb_reg_next.csr_wdata = ex_mem_reg.csr_wdata;
+
     if (ex_mem_reg.inst[6:0] == op_load) begin
         case (ex_mem_reg.mem_rmask)
             4'b0001: begin 

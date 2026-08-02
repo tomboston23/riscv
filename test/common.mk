@@ -19,3 +19,5 @@ HW_SRC := $(shell find $(STEM)/src/hardware/pkg -name "*.sv" -or -name "*.v")
 HW_SRC += $(shell find $(STEM)/src/hardware/rtl -name "*.sv" -or -name "*.v")
 HW_SRC += $(shell find $(STEM)/src/hardware/sim -name "*.sv" -or -name "*.v")
 HW_SRC += $(MEM_RTL)
+
+TESTCODE_INCLUDES := $(STEM)/test/test_files/_start/_start.s

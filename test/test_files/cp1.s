@@ -3,9 +3,8 @@
 .align 4
 .section .text
 .globl _start
-_start:
-
-    
+main:
+    mv x31, ra # save ra in x31
     add  x22, x0, x0   
     addi x1, x0, 5
     la x2, _test_data
@@ -66,22 +65,9 @@ loop:
     nop
     nop
     nop
-    j done
-    nop
-    nop
-    nop
-.if (F_RISCV_EXIT_INST_PRESENT == 1)
-done:
-    .word F_RISCV_EXIT_INST
-.else
-done: 
-    la t0, tohost
-    li t1, 1
-    sw t1, 0(t0)
-.endif
-    
-    # Program ends here - will just keep executing whatever follows
-    # (likely faulting or wrapping around depending on your implementation)
+
+    mv sp, x31 # restore ra
+    ret
 
 .section .data
 _test_data:

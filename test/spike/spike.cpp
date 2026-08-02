@@ -171,6 +171,11 @@ InstInfo GetSpikeInfo(processor_t* proc) {
             info.rs2_s = 0;
             info.rs2_v = 0;
             break;
+
+        case 0x73:  // SYSTEM
+            info.rs2_s = 0;
+            info.rs2_v = 0;
+            break;
     }
     // Populate info with state data
     return info;
@@ -302,7 +307,7 @@ int main(int argc, char** argv)
     mems.push_back({0x80000000, mem});
 
     cfg_t cfg;
-    cfg.isa = "RV32I";
+    cfg.isa = "RV32IM_ZICSR";
 
     sim_t sim(
         &cfg,
