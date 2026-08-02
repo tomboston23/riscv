@@ -132,6 +132,19 @@ fail:
 
 pass: 
     csrr ra, mscratch # restore ra
+    csrw mstatus, x19
+    csrr x18, mstatus
+    li x15, 0xFFFFFFFF
+    csrw mstatus, x15
+    li x15, 0xFFFFFFFF
+    csrr x12, mstatus
+    csrw mtvec, x15
+    li x12, 0x12345678
+    li x12, 0x12345678
+    csrr x12, mtvec
+    csrw stvec, x15
+    csrw sepc, x15
+    csrw mepc, x15
     ret
 
 .section .data

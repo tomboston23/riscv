@@ -38,7 +38,7 @@ assign j_imm = {{12{inst[31]}}, inst[19:12], inst[20], inst[30:25], inst[24:21],
 assign z_imm = {{27{1'b0}}, inst[19:15]};
 
 
-logic [31:0] rs1_v, rs2_v;
+logic [31:0] rs1_v, rs2_v, csr_v;
 always_comb begin
     if (id_ex_reg.rs1_s != '0 && id_ex_reg.rs1_s == ex_mem_fwd.rd_s) begin
         rs1_v = ex_mem_fwd.rd_v;
@@ -46,6 +46,14 @@ always_comb begin
         rs1_v = mem_wb_fwd.rd_v;
     end else begin
         rs1_v = id_ex_reg.rs1_v;
+    end
+
+    if (id_ex_reg.csr_rd_s != '0 && id_ex_reg.csr_rd_s == ex_mem_fwd.csr_rd_s) begin
+        csr_v = ex_mem_fwd.csr_rd_v;
+    end else if (id_ex_reg.csr_rd_s != '0 && id_ex_reg.csr_rd_s == mem_wb_fwd.csr_rd_s) begin
+        csr_v = mem_wb_fwd.csr_rd_v;
+    end else begin
+        csr_v = id_ex_reg.csr_rdata;
     end
 
     if (id_ex_reg.rs2_s != '0 && id_ex_reg.rs2_s == ex_mem_fwd.rd_s) begin
@@ -277,47 +285,79 @@ always_comb begin
             case (inst[14:12])
             
                 3'b001: begin // csrrw
+                    
                     ex_mem_reg_next.csr_wdata = rs1_v;
 
-                    if (id_ex_reg.rd_s != '0) begin
-                        ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
+                    if (id_ex_reg.rd_s != '0) begin // read CSR
+                        ex_mem_reg_next.rd_v = csr_v;
+                        ex_mem_reg_next.csr_rdata = csr_v;
                     end
                 end
                 3'b010: begin // csrrs
-                    ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
+                    ex_mem_reg_next.rd_v = csr_v;
+                    ex_mem_reg_next.csr_rdata = csr_v;
 
-                    if (id_ex_reg.rs1_s != '0) begin
-                        ex_mem_reg_next.csr_wdata = rs1_v | id_ex_reg.csr_rdata;
+                    aluop = alu_or;
+                    a = rs1_v;
+                    b = csr_v;
+
+                    if (id_ex_reg.rs1_s != '0) begin // write CSR
+                        ex_mem_reg_next.csr_wdata = aluout;
                     end
                 end
                 3'b011: begin // csrrc
-                    ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
+                    ex_mem_reg_next.rd_v = csr_v;
+                    ex_mem_reg_next.csr_rdata = csr_v;
 
-                    if (id_ex_reg.rs1_s != '0) begin
-                        ex_mem_reg_next.csr_wdata = ~rs1_v & id_ex_reg.csr_rdata;
+                    aluop = alu_and;
+                    a = ~rs1_v;
+                    b = csr_v;
+
+                    if (id_ex_reg.rs1_s != '0) begin // write CSR
+                        ex_mem_reg_next.csr_wdata = aluout;
                     end
                 end
                 3'b101: begin // csrrwi
                     ex_mem_reg_next.csr_wdata = z_imm;
 
-                    if (id_ex_reg.rd_s != '0) begin
-                        ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
+                    if (id_ex_reg.rd_s != '0) begin // read CSR
+                        ex_mem_reg_next.csr_rdata = csr_v;
+                        ex_mem_reg_next.rd_v = csr_v;
                     end
                 end
                 3'b110: begin // csrrsi
-                    if (id_ex_reg.rs1_s != '0) begin
-                        ex_mem_reg_next.csr_wdata = z_imm | id_ex_reg.csr_rdata;
-                    end
-                    ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
+                    ex_mem_reg_next.rd_v = csr_v;
+                    ex_mem_reg_next.csr_rdata = csr_v;
+
+                    aluop = alu_or;
+                    a = z_imm;
+                    b = csr_v;
+
+                    if (id_ex_reg.rs1_s != '0) ex_mem_reg_next.csr_wdata = aluout;
                 end
                 3'b111: begin // csrrci
-                    if (id_ex_reg.rs1_s != '0) begin
-                        ex_mem_reg_next.csr_wdata = ~z_imm & id_ex_reg.csr_rdata;
-                    end
-                    ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
+                    ex_mem_reg_next.rd_v = csr_v;
+                    ex_mem_reg_next.csr_rdata = csr_v;
+
+                    aluop = alu_and;
+                    a = ~z_imm;
+                    b = csr_v;
+
+                    if (id_ex_reg.rs1_s != '0) ex_mem_reg_next.csr_wdata = aluout;
                 end
                 default: ex_mem_reg_next.valid = '0;
             endcase
+
+            if (id_ex_reg.csr_we) begin
+                case (id_ex_reg.csr_rd_s)
+                    csr_mstatus_reg: ex_mem_reg_next.csr_wdata = ex_mem_reg_next.csr_wdata & MSTATUS_WMASK.val;
+                    csr_mtvec_reg: ex_mem_reg_next.csr_wdata = ex_mem_reg_next.csr_wdata & MTVEC_WMASK; // 4B align
+                    csr_stvec_reg: ex_mem_reg_next.csr_wdata = ex_mem_reg_next.csr_wdata & MTVEC_WMASK; // 4B align
+                    csr_mepc_reg: ex_mem_reg_next.csr_wdata = ex_mem_reg_next.csr_wdata & ~32'd3; // 4B align
+                    csr_sepc_reg: ex_mem_reg_next.csr_wdata = ex_mem_reg_next.csr_wdata & ~32'd3; // 4B align
+                    default: ;
+                endcase
+            end
         end
 
         default: 

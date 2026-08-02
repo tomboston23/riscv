@@ -62,7 +62,6 @@ package rv32i_types;
     logic [31:0] pc;
     logic [31:0] pc_next;
     logic [31:0] inst;
-    logic [1:0] priv;
   } if_id_t;
 
   typedef struct packed {
@@ -140,7 +139,6 @@ package rv32i_types;
     logic [4:0]  rd_s;
     logic [31:0] rd_v;
     logic        trap;
-    logic [1:0]  priv;
     logic [4:0]  csr_rd_s;
     logic [31:0] csr_rd_v;
     logic [31:0] trap_pc;
@@ -233,5 +231,44 @@ package rv32i_types;
     smode = 2'b01,
     mmode = 2'b11
   } priv_t;
+
+  typedef struct packed {
+      logic        sd;     // bit 31
+      logic [5:0]  wpri2;  // bit 30:25
+      logic        sdt;    // bit 24
+      logic        spelp;  // bit 23
+      logic        tsr;    // bit 22
+      logic        tw;     // bit 21
+      logic        tvm;    // bit 20
+      logic        mxr;    // bit 19
+      logic        sum;    // bit 18
+      logic        mprv;   // bit 17
+      logic [1:0]  xs;     // bit 16:15
+      logic [1:0]  fs;     // bit 14:13
+      logic [1:0]  mpp;    // bit 12:11
+      logic [1:0]  vs;     // bit 10:9
+      logic        spp;    // bit 8
+      logic        mpie;   // bit 7
+      logic        ube;    // bit 6
+      logic        spie;   // bit 5
+      logic        wpri1;  // bit 4
+      logic        mie;    // bit 3
+      logic        wpri0;  // bit 2
+      logic        sie;    // bit 1
+      logic        wpri3;  // bit 0
+  } mstatus_t;
+
+  
+  typedef union packed {
+    logic [31:0] val;
+    mstatus_t f;
+  } mstatus_union_t;
+
+  localparam mstatus_union_t MSTATUS_WMASK = '{
+    val: 32'h806279AA // Spike's enabled mstatus bits
+  };
+
+  localparam logic[31:0] MTVEC_WMASK = 32'hFFFFFFFD; // MODE 2'b11 and 2'b10 are invalid, so disable bit 1
+
 
 endpackage

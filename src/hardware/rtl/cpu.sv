@@ -99,9 +99,13 @@ fwd_t ex_mem_fwd, mem_wb_fwd;
 always_comb begin
     ex_mem_fwd.rd_s = ex_mem_reg.valid ? ex_mem_reg.rd_s : '0;
     ex_mem_fwd.rd_v = ex_mem_reg.rd_v;
+    ex_mem_fwd.csr_rd_s = ex_mem_reg.valid ? ex_mem_reg.csr_rd_s : '0;
+    ex_mem_fwd.csr_rd_v = ex_mem_reg.csr_wdata;
 
     mem_wb_fwd.rd_s = mem_wb_reg.valid ? mem_wb_reg.rd_s : '0;
     mem_wb_fwd.rd_v = mem_wb_reg.rd_v;
+    mem_wb_fwd.csr_rd_s = mem_wb_reg.valid ? mem_wb_reg.csr_rd_s : '0;
+    mem_wb_fwd.csr_rd_v = mem_wb_reg.csr_wdata;
 end
 
 assign load_hazard = (((id_ex_reg.rd_s == rs1_s) || (id_ex_reg.rd_s == rs2_s)) && id_ex_reg.inst[6:0] == op_load && id_ex_reg.rd_s != '0);
@@ -231,24 +235,22 @@ always_comb begin
 end
 
 // debug signals for waveform
-logic [31:0] debug_csr_rdata_mem, debug_csr_rdata_ex;
-logic [31:0] debug_rd_v_mem; 
-logic [4:0] debug_rd_s_mem;
-logic [4:0] debug_ex_csr, debug_mem_csr, debug_wb_csr;
-logic debug_ex_csr_we, debug_mem_csr_we, debug_wb_csr_we;
 
-assign debug_ex_csr = id_ex_reg.csr_rd_s;
-assign debug_mem_csr = ex_mem_reg.csr_rd_s;
-assign debug_wb_csr = mem_wb_reg.csr_rd_s;
+logic [31:0] debug_ex_fwd_csr_rd_v, debug_mem_fwd_csr_rd_v;
+logic [4:0] debug_ex_fwd_csr_rd_s, debug_mem_fwd_csr_rd_s, debug_id_csr_rd_s;
 
-assign debug_ex_csr_we = id_ex_reg.csr_we;
-assign debug_mem_csr_we = ex_mem_reg.csr_we;
-assign debug_wb_csr_we = mem_wb_reg.csr_we;
+logic [31:0] debug_ex_csr_wdata, debug_mem_csr_wdata;
+logic [4:0] debug_ex_csr_wdata_s, debug_mem_csr_wdata_s;
 
-assign debug_csr_rdata_ex = id_ex_reg.csr_rdata;
-assign debug_csr_rdata_mem = ex_mem_reg.csr_rdata;
+assign debug_ex_csr_wdata = ex_mem_reg.csr_wdata;
+assign debug_mem_csr_wdata = mem_wb_reg.csr_wdata;
+assign debug_ex_csr_wdata_s = ex_mem_reg.csr_rd_s;
+assign debug_mem_csr_wdata_s = mem_wb_reg.csr_rd_s;
+assign debug_ex_fwd_csr_rd_v = ex_mem_fwd.csr_rd_v;
+assign debug_ex_fwd_csr_rd_s = ex_mem_fwd.csr_rd_s;
+assign debug_mem_fwd_csr_rd_v = mem_wb_fwd.csr_rd_v;
+assign debug_mem_fwd_csr_rd_s = mem_wb_fwd.csr_rd_s;
+assign debug_id_csr_rd_s = id_ex_reg.csr_rd_s;
 
-assign debug_rd_v_mem = ex_mem_reg.rd_v;
-assign debug_rd_s_mem = ex_mem_reg.rd_s;
 
 endmodule

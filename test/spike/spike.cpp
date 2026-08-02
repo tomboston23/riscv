@@ -439,6 +439,8 @@ int main(int argc, char** argv)
     proc->get_state()->pc = elf.entry;
     auto state = proc->get_state();
 
+    printf("misa = %08lx\n", state->misa->read());
+
     cout << "Starting Spike\n";
 
     bool pass_spike = false;
