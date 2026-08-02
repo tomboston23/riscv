@@ -164,7 +164,10 @@ package rv32i_types;
     logic [31:0] mem_rdata;
     logic [31:0] mem_wdata;
     logic [31:0] order;
-    logic [1:0] priv;
+    logic csr_we;
+    logic [4:0]  csr_rd_s;
+    logic [31:0] csr_rdata;
+    logic [31:0] csr_wdata;
   } commit_intf_t;
 
   localparam NUM_CSR_REGS = 32;
@@ -194,6 +197,7 @@ package rv32i_types;
   } csr_t;
   
   typedef enum logic [4:0] {
+    csr_invalid_reg     = 5'b00000,
     csr_sstatus_reg     = 5'b00001,
     csr_sie_reg         = 5'b00010,
     csr_stvec_reg       = 5'b00011,
@@ -205,15 +209,16 @@ package rv32i_types;
     csr_mstatus_reg     = 5'b01001,
     csr_mie_reg         = 5'b01010,
     csr_mtvec_reg       = 5'b01011,
-    csr_mscratch_reg    = 5'b01100,
-    csr_mepc_reg        = 5'b01101,
-    csr_mcause_reg      = 5'b01110,
-    csr_mtval_reg       = 5'b01111,
-    csr_mip_reg         = 5'b10000,
-    csr_mnscratch_reg   = 5'b10001,
-    csr_mnepc_reg       = 5'b10010,
-    csr_mncause_reg     = 5'b10011,
-    csr_mnstatus_reg    = 5'b10100
+    csr_mstatush_reg    = 5'b01100,
+    csr_mscratch_reg    = 5'b01101,
+    csr_mepc_reg        = 5'b01110,
+    csr_mcause_reg      = 5'b01111,
+    csr_mtval_reg       = 5'b10000,
+    csr_mip_reg         = 5'b10001,
+    csr_mnscratch_reg   = 5'b10010,
+    csr_mnepc_reg       = 5'b10011,
+    csr_mncause_reg     = 5'b10100,
+    csr_mnstatus_reg    = 5'b10101
   } csr_regfile_t;
   
   typedef enum logic [3:0] {

@@ -224,16 +224,31 @@ always_comb begin
     commit_intf.mem_wdata = mem_wb_reg.mem_wdata;
     commit_intf.mem_addr = mem_wb_reg.mem_addr;
     commit_intf.mem_rdata = mem_wb_reg.mem_rdata;
+    commit_intf.csr_we = mem_wb_reg.csr_we;
+    commit_intf.csr_rd_s = mem_wb_reg.csr_rd_s;
+    commit_intf.csr_rdata = mem_wb_reg.csr_rdata;
+    commit_intf.csr_wdata = mem_wb_reg.csr_wdata;
 end
 
 // debug signals for waveform
-logic [4:0] debug_ex_csr, debug_ex_csr_next, debug_mem_csr, debug_wb_csr;
+logic [31:0] debug_csr_rdata_mem, debug_csr_rdata_ex;
+logic [31:0] debug_rd_v_mem; 
+logic [4:0] debug_rd_s_mem;
+logic [4:0] debug_ex_csr, debug_mem_csr, debug_wb_csr;
 logic debug_ex_csr_we, debug_mem_csr_we, debug_wb_csr_we;
+
 assign debug_ex_csr = id_ex_reg.csr_rd_s;
-assign debug_ex_csr_next = id_ex_reg_next.csr_rd_s;
 assign debug_mem_csr = ex_mem_reg.csr_rd_s;
 assign debug_wb_csr = mem_wb_reg.csr_rd_s;
+
 assign debug_ex_csr_we = id_ex_reg.csr_we;
 assign debug_mem_csr_we = ex_mem_reg.csr_we;
 assign debug_wb_csr_we = mem_wb_reg.csr_we;
+
+assign debug_csr_rdata_ex = id_ex_reg.csr_rdata;
+assign debug_csr_rdata_mem = ex_mem_reg.csr_rdata;
+
+assign debug_rd_v_mem = ex_mem_reg.rd_v;
+assign debug_rd_s_mem = ex_mem_reg.rd_s;
+
 endmodule

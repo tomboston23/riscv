@@ -28,7 +28,11 @@ module cpu_simple_tb(
     output logic [31:0] commit_mem_addr,
     output logic [31:0] commit_mem_rdata,
     output logic [31:0] commit_mem_wdata,
-    output logic [31:0] order
+    output logic [31:0] order,
+    output logic commit_csr_we,
+    output logic [4:0] commit_csr_rd_s,
+    output logic [31:0] commit_csr_rdata,
+    output logic [31:0] commit_csr_wdata
 );
 
     logic clk = '0;
@@ -64,7 +68,11 @@ module cpu_simple_tb(
     output logic [31:0] commit_mem_addr,
     output logic [31:0] commit_mem_rdata,
     output logic [31:0] commit_mem_wdata,
-    output logic [31:0] order
+    output logic [31:0] order,
+    output logic commit_csr_we,
+    output logic [4:0] commit_csr_rd_s,
+    output logic [31:0] commit_csr_rdata,
+    output logic [31:0] commit_csr_wdata
 );
 `endif
 
@@ -93,6 +101,10 @@ module cpu_simple_tb(
     assign commit_mem_rmask = commit_intf.mem_rmask;
     assign commit_mem_rdata = commit_intf.mem_rdata;
     assign order = commit_intf.order;
+    assign commit_csr_we = commit_intf.csr_we;
+    assign commit_csr_rd_s = commit_intf.csr_rd_s;
+    assign commit_csr_rdata = commit_intf.csr_rdata;
+    assign commit_csr_wdata = commit_intf.csr_wdata;
 
 
     //-------------------------------------------------------------------------

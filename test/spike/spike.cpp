@@ -31,6 +31,62 @@ struct ElfInfo {
 #endif
 };
 
+enum csr_regfile_t {
+    CSR_INVALID_REG         = 0X0,
+    CSR_SSTATUS_REG         = 0X1,
+    CSR_SIE_REG             = 0X2,
+    CSR_STVEC_REG           = 0X3,
+    CSR_SSCRATCH_REG        = 0X4,
+    CSR_SEPC_REG            = 0X5,
+    CSR_SCAUSE_REG          = 0X6,
+    CSR_STVAL_REG           = 0X7,     
+    CSR_SIP_REG             = 0X8,
+    
+    CSR_MSTATUS_REG         = 0X9,
+    CSR_MIE_REG             = 0XA,
+    CSR_MTVEC_REG           = 0XB,
+    CSR_MSTATUSH_REG        = 0XC,
+    CSR_MSCRATCH_REG        = 0XD,
+    CSR_MEPC_REG            = 0XE,
+    CSR_MCAUSE_REG          = 0XF,
+    CSR_MTVAL_REG           = 0X10,
+    CSR_MIP_REG             = 0X11,
+
+    CSR_MNSCRATCH_REG       = 0X12,
+    CSR_MNEPC_REG           = 0X13,
+    CSR_MNCAUSE_REG         = 0X14,
+    CSR_MNSTATUS_REG        = 0X15
+};
+
+csr_regfile_t GetCsrRegfile(reg_t csr) {
+    switch (csr) {
+        case CSR_SSTATUS:         return CSR_SSTATUS_REG;
+        case CSR_SIE:             return CSR_SIE_REG;
+        case CSR_STVEC:           return CSR_STVEC_REG;
+        case CSR_SSCRATCH:        return CSR_SSCRATCH_REG;
+        case CSR_SEPC:            return CSR_SEPC_REG;
+        case CSR_SCAUSE:          return CSR_SCAUSE_REG;
+        case CSR_STVAL:           return CSR_STVAL_REG;
+        case CSR_SIP:             return CSR_SIP_REG;
+        case CSR_MSTATUS:         return CSR_MSTATUS_REG;
+        case CSR_MIE:             return CSR_MIE_REG;
+        case CSR_MTVEC:           return CSR_MTVEC_REG;
+        case CSR_MSTATUSH:        return CSR_MSTATUSH_REG;
+        case CSR_MSCRATCH:        return CSR_MSCRATCH_REG;
+        case CSR_MEPC:            return CSR_MEPC_REG;
+        case CSR_MCAUSE:          return CSR_MCAUSE_REG;
+        case CSR_MTVAL:           return CSR_MTVAL_REG;
+        case CSR_MIP:             return CSR_MIP_REG;
+        case CSR_MNSCRATCH:       return CSR_MNSCRATCH_REG;
+        case CSR_MNEPC:           return CSR_MNEPC_REG;
+        case CSR_MNCAUSE:         return CSR_MNCAUSE_REG;
+        case CSR_MNSTATUS:        return CSR_MNSTATUS_REG;
+        default:                  return (csr_regfile_t)0;
+    }
+    return (csr_regfile_t)0;
+}
+
+
 struct InstInfo {
     uint8_t valid;
     uint32_t pc;
@@ -48,6 +104,10 @@ struct InstInfo {
     uint32_t mem_rdata;
     uint32_t mem_addr;
     uint32_t order;
+    uint8_t csr_we;
+    uint8_t csr_rd_s;
+    uint32_t csr_rdata;
+    uint32_t csr_wdata;
 };
 
 static inline void AdvanceVerilatorTime(
@@ -77,6 +137,10 @@ bool CompareInstInfo(const InstInfo& a, const InstInfo& b) {
     if (a.mem_rdata != b.mem_rdata) return false;
     if (a.mem_wdata != b.mem_wdata) return false;
     if (a.mem_addr != b.mem_addr) return false;
+    if (a.csr_we != b.csr_we) return false;
+    if (a.csr_rd_s != b.csr_rd_s) return false;
+    if (a.csr_rdata != b.csr_rdata) return false;
+    if (a.csr_wdata != b.csr_wdata) return false;
 
     return true;
 }
@@ -173,8 +237,41 @@ InstInfo GetSpikeInfo(processor_t* proc) {
             break;
 
         case 0x73:  // SYSTEM
-            info.rs2_s = 0;
+            reg_t csr = insn.csr();
+            reg_t csr_val = proc->get_csr(csr);
+            csr_regfile_t csr_reg = GetCsrRegfile(csr);
+            
+            switch ((uint32_t)insn.funct3()) {
+                case 0x5: // CSRRWI - same as 0x1 without rs1
+                    info.rs1_s = 0;
+                    info.rs1_v = 0;
+                case 0x1: // CSRRW
+                    if (info.rd_s == 0) {
+                        info.csr_rdata = 0;
+                    } else {
+                        info.csr_rdata = (uint32_t)csr_val;
+                    }
+                    info.csr_we = 1;
+                    info.csr_rd_s = (uint8_t)csr_reg;
+                    break;
+                case 0x6: // CSRRSI
+                case 0x7: // CSRRCI
+                    info.rs1_s = 0;
+                    info.rs1_v = 0;
+                case 0x2: // CSRRS
+                case 0x3: // CSRRC
+                    if (insn.rs1() == 0) { // bits [19:15], both rs1 and z_imm
+                        info.csr_we = 0;
+                    } else {
+                        info.csr_we = 1;
+                    }
+                    
+                    info.csr_rd_s = (uint8_t)csr_reg;
+                    info.csr_rdata = (uint32_t)csr_val;
+                    break;
+            }
             info.rs2_v = 0;
+            info.rs2_s = 0;
             break;
     }
     // Populate info with state data
@@ -227,6 +324,10 @@ void print_info(const InstInfo& spike_info, const InstInfo& verilator_info, stri
     print_u32_hex("MEM_WDATA:", spike_info.mem_wdata, verilator_info.mem_wdata);
     print_u8_hex("MEM_RMASK:", spike_info.mem_rmask, verilator_info.mem_rmask);
     print_u32_hex("MEM_RDATA:", spike_info.mem_rdata, verilator_info.mem_rdata);
+    print_u8_int("CSR_WE:", spike_info.csr_we, verilator_info.csr_we);
+    print_u8_int("CSR_RD_S:", spike_info.csr_rd_s, verilator_info.csr_rd_s);
+    print_u32_hex("CSR_RDATA:", spike_info.csr_rdata, verilator_info.csr_rdata);
+    print_u32_hex("CSR_WDATA:", spike_info.csr_wdata, verilator_info.csr_wdata);
 }
 
 InstInfo GetVerilatorInfo(Vcpu_simple_tb* hw) {
@@ -248,6 +349,10 @@ InstInfo GetVerilatorInfo(Vcpu_simple_tb* hw) {
     info.mem_rdata = hw->commit_mem_rdata;
     info.mem_addr = hw->commit_mem_addr;
     info.order = hw->order;
+    info.csr_wdata = hw->commit_csr_wdata;
+    info.csr_rdata = hw->commit_csr_rdata;
+    info.csr_we = hw->commit_csr_we;
+    info.csr_rd_s = hw->commit_csr_rd_s;
     return info;
 }
 
@@ -345,7 +450,7 @@ int main(int argc, char** argv)
     while (!pass_spike && !pass_verilator)
     {
         state_t * state = proc->get_state();
-        uint32_t inst = (uint32_t)proc->get_mmu()->load_insn(state->pc).insn.bits();
+        insn_t insn = proc->get_mmu()->load_insn(state->pc).insn;
         uint32_t pc = state->pc;
 
         InstInfo spike_info = GetSpikeInfo(proc);
@@ -353,9 +458,12 @@ int main(int argc, char** argv)
         // Spike: step by 1
         proc->step(1);
 
-        spike_info.pc_next = state->pc;
+        spike_info.pc_next = state->pc;        
         spike_info.order = order;
         spike_info.rd_v = state->XPR[spike_info.rd_s];
+        if (spike_info.csr_we) {
+            spike_info.csr_wdata = proc->get_csr(insn.csr());
+        }
 
 
         // Verilator: start stepping until we get a commit
@@ -369,12 +477,12 @@ int main(int argc, char** argv)
         if (!CompareInstInfo(spike_info, verilator_info)) {
             AdvanceVerilatorTime(hw); // get an extra time step in for debug
             cout << "SPIKE MISMATCH\n";
-            print_info(spike_info, verilator_info, proc->get_disassembler()->disassemble(inst));
+            print_info(spike_info, verilator_info, proc->get_disassembler()->disassemble(insn.bits()));
             break;
         }
 
 #if F_RISCV_EXIT_INST_PRESENT == 1
-        if (inst == F_RISCV_EXIT_INST) {
+        if (insn.bits() == F_RISCV_EXIT_INST) {
             pass_spike = true;
         }
         if (hw.commit_inst == F_RISCV_EXIT_INST) {

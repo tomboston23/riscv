@@ -92,7 +92,6 @@ always_comb begin
     ex_mem_reg_next.csr_we = id_ex_reg.csr_we;
     ex_mem_reg_next.csr_rd_s = id_ex_reg.csr_rd_s;
     ex_mem_reg_next.csr_rdata = id_ex_reg.csr_rdata;
-    ex_mem_reg_next.csr_wdata = '0;
 
     //defaults
     aluop = alu_add;
@@ -276,29 +275,46 @@ always_comb begin
 
         op_system: begin
             case (inst[14:12])
-                3'b000: begin // csrrw
-                    ex_mem_reg_next.csr_we = '1;
+            
+                3'b001: begin // csrrw
                     ex_mem_reg_next.csr_wdata = rs1_v;
+
+                    if (id_ex_reg.rd_s != '0) begin
+                        ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
+                    end
                 end
-                3'b001: begin // csrrs
-                    ex_mem_reg_next.csr_we = '1;
-                    ex_mem_reg_next.csr_wdata = rs1_v | ex_mem_reg_next.csr_rdata;
+                3'b010: begin // csrrs
+                    ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
+
+                    if (id_ex_reg.rs1_s != '0) begin
+                        ex_mem_reg_next.csr_wdata = rs1_v | id_ex_reg.csr_rdata;
+                    end
                 end
-                3'b010: begin // csrrc
-                    ex_mem_reg_next.csr_we = '1;
-                    ex_mem_reg_next.csr_wdata = ~rs1_v & ex_mem_reg_next.csr_rdata;
+                3'b011: begin // csrrc
+                    ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
+
+                    if (id_ex_reg.rs1_s != '0) begin
+                        ex_mem_reg_next.csr_wdata = ~rs1_v & id_ex_reg.csr_rdata;
+                    end
                 end
-                3'b100: begin // csrrwi
-                    ex_mem_reg_next.csr_we = '1;
+                3'b101: begin // csrrwi
                     ex_mem_reg_next.csr_wdata = z_imm;
+
+                    if (id_ex_reg.rd_s != '0) begin
+                        ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
+                    end
                 end
-                3'b101: begin // csrrsi
-                    ex_mem_reg_next.csr_we = '1;
-                    ex_mem_reg_next.csr_wdata = z_imm | ex_mem_reg_next.csr_rdata;
+                3'b110: begin // csrrsi
+                    if (id_ex_reg.rs1_s != '0) begin
+                        ex_mem_reg_next.csr_wdata = z_imm | id_ex_reg.csr_rdata;
+                    end
+                    ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
                 end
-                3'b110: begin // csrrci
-                    ex_mem_reg_next.csr_we = '1;
-                    ex_mem_reg_next.csr_wdata = ~z_imm & ex_mem_reg_next.csr_rdata;
+                3'b111: begin // csrrci
+                    if (id_ex_reg.rs1_s != '0) begin
+                        ex_mem_reg_next.csr_wdata = ~z_imm & id_ex_reg.csr_rdata;
+                    end
+                    ex_mem_reg_next.rd_v = id_ex_reg.csr_rdata;
                 end
                 default: ex_mem_reg_next.valid = '0;
             endcase

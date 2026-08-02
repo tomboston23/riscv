@@ -2,7 +2,7 @@
 
 .align 4
 .section .text
-.globl _start
+.globl main
 main:
     mv x31, ra # save ra in x31
     add  x22, x0, x0   
@@ -66,7 +66,7 @@ loop:
     nop
     nop
 
-    mv sp, x31 # restore ra
+    mv ra, x31 # restore ra
     ret
 
 .section .data

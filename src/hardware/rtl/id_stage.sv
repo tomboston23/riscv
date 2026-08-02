@@ -133,6 +133,7 @@ always_comb begin
                         csr_s = csr_s_decode;
                         id_ex_reg_next.csr_rdata = csr_v;
                     end
+                    
                     id_ex_reg_next.csr_rd_s = csr_s_decode;
                     id_ex_reg_next.rd_s  = rd;
                     id_ex_reg_next.csr_we = 1'b1;
@@ -142,17 +143,18 @@ always_comb begin
                 end
                 3'b010, 3'b011: // csrrs / csrrc - same behavior
                 begin
+                    id_ex_reg_next.rd_s  = rd;
                     id_ex_reg_next.rs1_s = if_id_reg.inst[19:15];
                     id_ex_reg_next.rs1_v = rs1_v;
                     rs1_s = rs1;
                     id_ex_reg_next.csr_rd_s = csr_s_decode;
+                    id_ex_reg_next.csr_rdata = csr_v;
+                    csr_s = csr_s_decode;
+
                     if (rs1 == '0) begin // no CSR write
                         id_ex_reg_next.csr_we = '0;
-                        id_ex_reg_next.csr_rdata = '0;
                     end else begin
                         id_ex_reg_next.csr_we = '1;
-                        csr_s = csr_s_decode;
-                        id_ex_reg_next.csr_rdata = csr_v;
                     end
 
                     if (csr_s_decode == '0) begin
@@ -161,16 +163,19 @@ always_comb begin
                 end
                 3'b110, 3'b111: // csrrsi / csrrci - same as csrrs / csrrc but without rs1
                 begin
-                    if (rs1 == '0) begin // no CSR write
+                    if (rs1 == '0) begin // no CSR write because z_imm = 0
+                    // rs1 and z_imm occupy the same bits so rs1 == '0 means z_imm == '0
                         id_ex_reg_next.csr_we = '0;
-                        id_ex_reg_next.csr_rdata = '0;
                     end else begin
                         id_ex_reg_next.csr_we = '1;
-                        csr_s = csr_s_decode;
-                        id_ex_reg_next.csr_rdata = csr_v;
                     end
 
+                    // reads unconditionally
+                    id_ex_reg_next.rd_s  = rd;
+                    csr_s = csr_s_decode;
+                    id_ex_reg_next.csr_rdata = csr_v;
                     id_ex_reg_next.csr_rd_s = csr_s_decode;
+
                     if (csr_s_decode == '0) begin
                         id_ex_reg_next.valid = '0;
                     end
