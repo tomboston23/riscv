@@ -1,12 +1,4 @@
-def env_check
-    if (ENV['STEM'] != __dir__)
-        abort "Bootenv and retry!"
-        false
-    else
-        puts "\e[32mPASSED\e[0m -> Bootenv check"
-        true
-    end
-end
+require_relative "../env_check.rb"
 
 def parse_global_features(source_path)
   features = []
@@ -197,8 +189,9 @@ def generate_feature_file()
 end
 
 if __FILE__ == $PROGRAM_NAME
-  if env_check()
-    system("bootenv")
+  if env_check(__dir__)
+    # system("bootenv")
+    exit 0
   end
   generate_feature_file()
 end

@@ -79,7 +79,7 @@ always_ff @(posedge clk) begin
                 if_id_reg.valid <= '0;
                 id_ex_reg.valid <= '0;
             end else if (load_hazard) begin
-                id_ex_reg.valid <= '0;
+                id_ex_reg <= '0;
                 if_id_reg <= if_id_reg;
                 pc <= pc;
             end

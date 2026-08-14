@@ -2,7 +2,9 @@
 
 .align 4
 .section .text.init
-.global _start
+.global _start 
+.global _get_print_buffer_start
+.global _increment_print_buffer_start
 _start:
     li x1, 0
     li x2, 0
@@ -41,6 +43,7 @@ _start:
     la t0, _trap_handler
     csrw mtvec, t0
     csrw stvec, t0
+    call _init_print_buffer
 _jump_to_main:
     call main
     j done
@@ -61,3 +64,27 @@ _trap_handler:
     addi x2, x2, 4
     csrw mepc, x2
     mret
+
+_init_print_buffer:
+    la t0, print_dump
+    mv t1, t0
+    addi t1, t1, 4
+    sw t1, 0(t0) # store the start address of the buffer in the first word
+    ret
+
+_get_print_buffer_start:
+    la a0, print_dump
+    lw a0, 0(a0) # load the current address of the buffer
+    ret
+
+_increment_print_buffer_start:
+    la t0, print_dump
+    lw t1, 0(t0) # load the current address of the buffer
+    addi t1, t1, 1 # increment the address by 1
+    sw t1, 0(t0) # store the new address back to the buffer
+    ret
+
+.section .print_dump
+    .align 4
+print_dump:
+    .space 1024

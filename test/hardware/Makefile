@@ -72,17 +72,21 @@ LDFLAGS=-L$(SPIKE)/build \
         $(HW_SIM)/verilated_timing.o \
         $(HW_SIM)/verilated_vcd_c.o
 
+SPIKE_SRC := $(wildcard $(STEM)/test/spike/*.cpp)
+
 .PHONY: spike
 
 spike: spike-compile-hw
 	@mkdir -p $(PROGRAM_HOME)/run
 	@touch $(PROGRAM_HOME)/run/program_run.log
+	@touch $(PROGRAM_HOME)/run/print_dump.log
 
 	$(CXX) $(CFLAGS) \
-	    $(STEM)/test/spike/spike.cpp \
+	    $(SPIKE_SRC) \
 	    -o $(PROGRAM_HOME)/spike_test \
 	    $(LDFLAGS)
 
 	$(PROGRAM_HOME)/spike_test \
 	    $(PROGRAM_HOME)/program.elf \
-	    $(PROGRAM_HOME)/run/program_run.log
+	    $(PROGRAM_HOME)/run/program_run.log \
+		$(PROGRAM_HOME)/run/print_dump.log

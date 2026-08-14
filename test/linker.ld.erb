@@ -39,6 +39,11 @@ SECTIONS
         *(.data*)
     } > RAM
 
+    .print_dump : ALIGN(4)
+    {
+        *(.print_dump*)
+    } > RAM
+
     .bss : ALIGN(4)
     {
         *(.bss*)

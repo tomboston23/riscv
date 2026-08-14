@@ -18,6 +18,7 @@ elf:
 		-mabi=ilp32 \
 		-nostdlib \
 		-I$(OUT_HOME)/features \
+		$(FW_INCLUDES) \
 		-Wl,-defsym,RAM_ORIGIN=$(RAM_ORIGIN) \
 		-T $(PROGRAM_HOME)/linker.ld \
 		-o $(PROGRAM_HOME)/program.elf \
