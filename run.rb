@@ -1,4 +1,4 @@
-require_relative "../env_check.rb"
+require_relative "env_check.rb"
 
 def parse_global_features(source_path)
   features = []
@@ -83,8 +83,8 @@ def generate_svh(features, output_path)
 
   FileUtils.mkdir_p(File.dirname(output_path))
   File.write(output_path, [header, body, footer].join)
-  puts "Generated #{output_path} with #{features.size} feature(s)."
-  puts "\e[32mPASSED\e[0m -> Feature file generation"
+  puts "Generated #{output_path} with #{features.size} feature(s).\n"
+  puts "\e[32mPASSED\e[0m -> Feature file generation\n"
 end
 
 
@@ -112,8 +112,8 @@ def generate_header(features, output_path)
 
   FileUtils.mkdir_p(File.dirname(output_path))
   File.write(output_path, [header, body, footer].join)
-  puts "Generated #{output_path} with #{features.size} feature(s)."
-  puts "\e[32mPASSED\e[0m -> Header file generation"
+  puts "Generated #{output_path} with #{features.size} feature(s).\n"
+  puts "\e[32mPASSED\e[0m -> Header file generation\n"
 end
 
 def generate_inc(features, output_path)
@@ -131,8 +131,8 @@ def generate_inc(features, output_path)
 
   FileUtils.mkdir_p(File.dirname(output_path))
   File.write(output_path, [header, body, "\n"].join)
-  puts "Generated #{output_path} with #{features.size} feature(s)."
-  puts "\e[32mPASSED\e[0m -> Assembler include generation"
+  puts "Generated #{output_path} with #{features.size} feature(s).\n"
+  puts "\e[32mPASSED\e[0m -> Assembler include generation\n"
 end
 
 def generate_linker_script(features, template_path, output_path)
@@ -150,7 +150,7 @@ def generate_linker_script(features, template_path, output_path)
 
   FileUtils.mkdir_p(File.dirname(output_path))
   File.write(output_path, rendered)
-  puts "\e[32mPASSED\e[0m -> Linker script generation"
+  puts "\e[32mPASSED\e[0m -> Linker script generation\n"
 end
 
 def safe_join(base, *parts)
@@ -183,8 +183,8 @@ def generate_feature_file()
       generate_linker_script(features, linker_template, linker_output)
     end
   rescue Errno::EACCES => e
-    puts "\e[31mFAILED\e[0m -> Feature file generation"
-    abort "Permission denied writing #{e.message}"
+    puts "\e[31mFAILED\e[0m -> Feature file generation\n"
+    abort "Permission denied writing #{e.message}\n"
   end
 end
 

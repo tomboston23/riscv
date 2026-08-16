@@ -57,6 +57,32 @@ package rv32i_types;
     alu_and = 3'b111
   } alu_ops;
 
+  typedef enum logic [2:0] {
+    trap   = 3'b000,
+    csrrw  = 3'b001,
+    csrrs  = 3'b010,
+    csrrc  = 3'b011,
+    csrrwi = 3'b101,
+    csrrsi = 3'b110,
+    csrrci = 3'b111
+  } system_funct3_t;
+
+  typedef enum logic [2:0] {
+    mul   = 3'b000,
+    mulh  = 3'b001,
+    mulhsu= 3'b010,
+    mulhu = 3'b011,
+    div   = 3'b100,
+    divu  = 3'b101,
+    rem   = 3'b110,
+    remu  = 3'b111
+  } muldiv_funct3_t;
+
+  typedef enum logic [6:0] {
+    funct7_muldiv = 7'b0000001,
+    funct7_srasub = 7'b0100000
+  } funct7_t;
+
   typedef struct packed {
     logic valid;
     logic [31:0] pc;
@@ -79,7 +105,7 @@ package rv32i_types;
     logic [4:0]  csr_rd_s;
     logic [31:0] csr_rdata;
     // trap CSR fields
-    logic trap;
+    logic trap_en;
     logic [31:0] trap_cause;
   } id_ex_t;
 
@@ -105,7 +131,7 @@ package rv32i_types;
     logic [31:0] csr_rdata;
     logic [31:0] csr_wdata;
     // trap CSR fields
-    logic trap;
+    logic trap_en;
     logic [31:0] trap_cause;
   } ex_mem_t;
 
@@ -131,14 +157,14 @@ package rv32i_types;
     logic [31:0] csr_rdata;
     logic [31:0] csr_wdata;
     // trap CSR fields
-    logic trap;
+    logic trap_en;
     logic [31:0] trap_cause;
   } mem_wb_t;
 
   typedef struct packed {
     logic [4:0]  rd_s;
     logic [31:0] rd_v;
-    logic        trap;
+    logic        trap_en;
     logic [4:0]  csr_rd_s;
     logic [31:0] csr_rd_v;
     logic [31:0] trap_pc;

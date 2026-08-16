@@ -105,7 +105,7 @@ always_comb begin
             case (funct3)
                 3'b000: // ecall / ebreak
                 begin
-                    id_ex_reg_next.trap = '1;
+                    id_ex_reg_next.trap_en = '1;
                 end
                 3'b001:  // csrrw
                 begin

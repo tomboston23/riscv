@@ -130,7 +130,7 @@ csr_regfile csr_regfile_inst (
     .csr_rd(csr_rd_s),
     .data_out(csr_rdata),
     .data_in(csr_wdata),
-    .trap('0),
+    .trap_en('0),
     .priv(priv_mode),
     .trap_pc(mem_wb_reg.pc),
     .trap_cause(mem_wb_reg.trap_cause)

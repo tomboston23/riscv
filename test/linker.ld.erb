@@ -4,7 +4,7 @@ ENTRY(_start)
 MEMORY
 {
     ROM (rx) : ORIGIN = RAM_ORIGIN, LENGTH = 64K
-    RAM (rw) : ORIGIN = RAM_ORIGIN + 64K, LENGTH = 64K
+    RAM (rw) : ORIGIN = RAM_ORIGIN + 64K, LENGTH = 256K
 }
 
 _stack_top = ORIGIN(RAM) + LENGTH(RAM);
@@ -15,12 +15,12 @@ SECTIONS
     <% if f_riscv_exit_inst_present.to_i == 0 %>
     .tohost : ALIGN(8)
     {
-        PROVIDE(tohost = .);
+        tohost = .;
         QUAD(0);
 
-        PROVIDE(fromhost = .);
+        fromhost = .;
         QUAD(0);
-    }
+    } > RAM
     <% end %>
     .text : ALIGN(4)
     {

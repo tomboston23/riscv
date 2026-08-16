@@ -4,9 +4,9 @@ int fib_rec(int n) {
     if (n <= 1) {
         return n;
     }
-    // return fib_rec(n - 1) + fib_rec(n - 2);
+    return fib_rec(n - 1) + fib_rec(n - 2);
 
-    return n;
+    // return n;
 }
 
 int fib_dp(int n) {
@@ -27,7 +27,7 @@ int fib_dp(int n) {
 }
 
 int main() {
-    int n = 5;
+    int n = 20;
     int result_dp = fib_dp(n);
     int result_rec = fib_rec(n);
     int success;

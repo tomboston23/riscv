@@ -21,6 +21,7 @@
 #include <optional>
 #include <fstream>
 #include <cstdint>
+#include <iomanip>
 
 using namespace std;
 
@@ -42,7 +43,6 @@ int main(int argc, char** argv)
     Vcpu_simple_tb hw; 
     hw.clk = 0; 
     hw.rst = 1; 
-    hw.eval(); 
 
     for (int i = 0; i < 5; i++) {
         AdvanceVerilatorTime(hw);
@@ -125,6 +125,10 @@ int main(int argc, char** argv)
             break;
         }
 
+        if (order % 1000 == 0) {
+            cout << "ORDER: " <<dec<<setw(7) << setfill(' ')<< order << ", PC: " << hex << spike_info.pc << ", INST: " << hex << spike_info.inst << endl;
+        }
+
 #if F_RISCV_EXIT_INST_PRESENT == 1
         if (insn.bits() == F_RISCV_EXIT_INST) {
             pass_spike = true;
@@ -138,7 +142,7 @@ int main(int argc, char** argv)
             if (value != 0){
                 pass_spike = true;
             }
-            if (verilator_info.mem_wmask != 0 && verilator_info.mem_wdata != 0 && verilator_info.mem_addr == elf.tohost) {
+            if (verilator_info.mem_wmask != 0 && verilator_info.mem_wdata != 0 && (verilator_info.mem_addr & ~0x3) == elf.tohost) {
                 pass_verilator = true;
             }
         }
@@ -151,12 +155,13 @@ int main(int argc, char** argv)
 
     if (pass_spike != pass_verilator) {
         cout << "Inconsistency found between Spike and Verilator\n";
+        cout << "\n\033[31m -> FAILED: SPIKE SIMULATION\033[0m\n";
     } else if (pass_spike && pass_verilator){
         cout << "\n\033[32m -> PASSED: SPIKE SIMULATION\033[0m\n";
     }
 
-    cout << "Print dump: 0x" << hex << elf.print_dump << endl;
-    cout << "Dump addr: 0x" << hex << proc->get_mmu()->load<uint32_t>(elf.print_dump, (xlate_flags_t)0x0) << endl;
+    // cout << "Print dump: 0x" << hex << elf.print_dump << endl;
+    // cout << "Dump addr: 0x" << hex << proc->get_mmu()->load<uint32_t>(elf.print_dump, (xlate_flags_t)0x0) << endl;
 
     ofstream dumpFile(dump_file);
     for (uint32_t i = elf.print_dump + 4; i < proc->get_mmu()->load<uint32_t>(elf.print_dump, (xlate_flags_t)0x0); i++) {

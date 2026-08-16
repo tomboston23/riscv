@@ -22,7 +22,7 @@ def main():
         elf = ELFFile(f)
         entry = elf.header["e_entry"]
         entry_hex = f"{entry:08X}"
-        print(f"entry=0x{entry_hex.lower()}")
+        # print(f"entry=0x{entry_hex.lower()}")
 
         if args.entry_file:
             entry_dir = os.path.dirname(args.entry_file)

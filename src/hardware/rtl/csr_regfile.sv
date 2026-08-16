@@ -11,7 +11,7 @@ import rv32i_types::*;
     output logic [31:0] data_out,
 
     // traps
-    input logic trap,
+    input logic trap_en,
     input logic [1:0]  priv,
     input logic [31:0] trap_pc,
     input logic [31:0] trap_cause
@@ -45,7 +45,7 @@ always_ff @(posedge clk) begin
         if (csr_we) begin
             csr_regfile[csr_rd] <= data_in;
         end 
-        if (trap) begin
+        if (trap_en) begin
             if (priv == 2'b11) begin // machine mode
                 csr_regfile[csr_mscratch_reg] <= trap_pc;
                 csr_regfile[csr_mcause_reg] <= trap_cause;

@@ -34,7 +34,9 @@ gtk:
 spike-compile-hw:
 	@mkdir -p $(HW_OUT_DIR)
 	@mkdir -p $(HW_SIM)
-	$(VERILATOR) \
+	@mkdir -p $(PROGRAM_HOME)/logs
+	@mkdir -p $(HW_OUT_DIR)/logs
+	@$(VERILATOR) \
 		--cc \
 		--timing \
 		--sv \
@@ -46,7 +48,11 @@ spike-compile-hw:
 		--top-module cpu_simple_tb \
 		$(VERILATOR_DEFINES) \
 		$(HW_SRC) \
-	&& make -C $(HW_SIM) -f Vcpu_simple_tb.mk
+		> $(PROGRAM_HOME)/logs/spike_compile.log 2>&1
+	@make -C $(HW_SIM) -f Vcpu_simple_tb.mk \
+		> $(HW_OUT_DIR)/logs/Vcpu_simple_tb.log 2>&1
+	@echo "Verilator compilation completed successfully."
+
 
 CXX=g++
 
@@ -81,12 +87,14 @@ spike: spike-compile-hw
 	@touch $(PROGRAM_HOME)/run/program_run.log
 	@touch $(PROGRAM_HOME)/run/print_dump.log
 
-	$(CXX) $(CFLAGS) \
+	@$(CXX) $(CFLAGS) \
 	    $(SPIKE_SRC) \
 	    -o $(PROGRAM_HOME)/spike_test \
 	    $(LDFLAGS)
 
-	$(PROGRAM_HOME)/spike_test \
+	@$(PROGRAM_HOME)/spike_test \
 	    $(PROGRAM_HOME)/program.elf \
 	    $(PROGRAM_HOME)/run/program_run.log \
-		$(PROGRAM_HOME)/run/print_dump.log
+		$(PROGRAM_HOME)/run/print_dump.log 
+	
+	@echo "Spike simulation completed successfully."
