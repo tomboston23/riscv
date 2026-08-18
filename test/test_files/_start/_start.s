@@ -88,3 +88,6 @@ _increment_print_buffer_start:
     .align 4
 print_dump:
     .space 1024
+
+
+.end

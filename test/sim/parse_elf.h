@@ -1,5 +1,5 @@
-#ifndef __ELF_H__
-#define __ELF_H__
+#ifndef __PARSE_ELF_H__
+#define __PARSE_ELF_H__
 
 #include <cstdint>
 #include <string>

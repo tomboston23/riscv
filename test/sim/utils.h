@@ -36,11 +36,11 @@ static inline void AdvanceVerilatorTime(
 {
     hw.clk = 0;
     hw.eval();
-    Verilated::timeInc(1);
+    Verilated::timeInc(1000);
 
     hw.clk = 1;
     hw.eval();
-    Verilated::timeInc(1);
+    Verilated::timeInc(1000);
 }
 
 bool CompareInstInfo(const InstInfo& a, const InstInfo& b);

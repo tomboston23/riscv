@@ -29,9 +29,9 @@ elf:
 	@echo "ELF compilation completed successfully."
 
 hex: 
-	@mkdir -p $(dir $@)
-	@python3 $(STEM)/test/parse_elf.py --elf_file $(PROGRAM_HOME)/program.elf --out_file $(PROGRAM_HOME)/program.hex --entry_file $(ENTRY_INFO)
-	@echo "Hex file generation completed successfully."
+	mkdir -p $(dir $@)
+	python3 $(STEM)/test/parse_elf.py --elf_file $(PROGRAM_HOME)/program.elf --out_file $(PROGRAM_HOME)/program.hex --mk_file $(ENTRY_INFO)
+	echo "Hex file generation completed successfully."
 
 dis: 
 	@$(OBJDUMP) -d $(PROGRAM_HOME)/program.elf > $(PROGRAM_HOME)/program.dis
@@ -45,3 +45,6 @@ hw: build
 
 spike: build
 	@make -f hardware/Makefile spike
+
+verilator: build
+	@make -f hardware/Makefile verilator

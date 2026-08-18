@@ -1,4 +1,4 @@
-#include "elf.h"
+#include "parse_elf.h"
 #include "csr.h"
 #include "utils.h"
 
@@ -85,13 +85,12 @@ int main(int argc, char** argv)
 
     cout << "Starting Spike\n";
 
-    bool pass_spike = false;
     bool pass_verilator = false;
 
     int order = 0;
     int verilator_cycles = 0;
 
-    while (!pass_spike && !pass_verilator)
+    while (!pass_verilator)
     {
         state_t * state = proc->get_state();
         insn_t insn = proc->get_mmu()->load_insn(state->pc).insn;
@@ -116,6 +115,12 @@ int main(int argc, char** argv)
             verilator_cycles++;
         } while(!hw.commit_valid);
 
+        
+        if (Verilated::gotFinish()) {
+            pass_verilator = true;
+            break;
+        }
+
         InstInfo verilator_info = GetVerilatorInfo(&hw);
 
         if (!CompareInstInfo(spike_info, verilator_info)) {
@@ -129,36 +134,15 @@ int main(int argc, char** argv)
             cout << "ORDER: " <<dec<<setw(7) << setfill(' ')<< order << ", PC: " << hex << spike_info.pc << ", INST: " << hex << spike_info.inst << endl;
         }
 
-#if F_RISCV_EXIT_INST_PRESENT == 1
-        if (insn.bits() == F_RISCV_EXIT_INST) {
-            pass_spike = true;
-        }
-        if (hw.commit_inst == F_RISCV_EXIT_INST) {
-            pass_verilator = true;
-        }
-#else 
-        if (elf.has_tohost) {
-            uint32_t value = proc->get_mmu()->load<uint32_t>((reg_t)elf.tohost, (xlate_flags_t)0x0);
-            if (value != 0){
-                pass_spike = true;
-            }
-            if (verilator_info.mem_wmask != 0 && verilator_info.mem_wdata != 0 && (verilator_info.mem_addr & ~0x3) == elf.tohost) {
-                pass_verilator = true;
-            }
-        }
-#endif
         // cout << "ORDER: " << order << " | PC: " <<hex<< spike_info.pc << " | INST: " <<hex<< spike_info.inst << endl;
 
         order++;
 
     }
 
-    if (pass_spike != pass_verilator) {
-        cout << "Inconsistency found between Spike and Verilator\n";
-        cout << "\n\033[31m -> FAILED: SPIKE SIMULATION\033[0m\n";
-    } else if (pass_spike && pass_verilator){
+
+    if (pass_verilator)
         cout << "\n\033[32m -> PASSED: SPIKE SIMULATION\033[0m\n";
-    }
 
     // cout << "Print dump: 0x" << hex << elf.print_dump << endl;
     // cout << "Dump addr: 0x" << hex << proc->get_mmu()->load<uint32_t>(elf.print_dump, (xlate_flags_t)0x0) << endl;

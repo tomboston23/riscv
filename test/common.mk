@@ -1,12 +1,19 @@
 OBJDUMP = riscv64-unknown-elf-objdump
 RAM_ORIGIN = 0x80000000
 PROGRAM_HOME := $(OUT_HOME)/program
-ENTRY_INFO := $(PROGRAM_HOME)/entry.mk
+ENTRY_INFO := $(PROGRAM_HOME)/elf.mk
 -include $(ENTRY_INFO)
 RUN_RESULT := $(shell ruby $(STEM)/run.rb)
 VERILATOR := verilator
 VERILATOR_ROOT := /usr/share/verilator
+
 VERILATOR_DEFINES := -DOUT_HOME=\"$(OUT_HOME)\" -DRAM_ORIGIN=$(RAM_ORIGIN) -DELF_ENTRY=$(ELF_ENTRY)
+ifdef TOHOST_ADDR
+VERILATOR_DEFINES += -DTOHOST_ADDR=$(TOHOST_ADDR)
+endif
+ifdef PRINT_DUMP_ADDR
+VERILATOR_DEFINES += -DPRINT_DUMP_ADDR=$(PRINT_DUMP_ADDR)
+endif
 
 MEM_RTL := $(shell find $(STEM)/src/memory/rtl -name "*.sv" -or -name "*.v")
 MEM_SRC := $(MEM_RTL)

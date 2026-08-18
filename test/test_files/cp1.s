@@ -72,3 +72,5 @@ loop:
 .section .data
 _test_data:
     .word 0x12345678
+
+.end
